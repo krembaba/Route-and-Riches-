@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="routeandriches.controller.GameController">
+
+    <top>
+        <ToolBar>
+            <Button text="Start" onAction="#handleStart"/>
+            <Button text="Pause" onAction="#handlePause"/>
+            <Button text="Normal" onAction="#handleNormalSpeed"/>
+            <Button text="Fast" onAction="#handleFastSpeed"/>
+            <Label text="Route and Riches"/>
+        </ToolBar>
+    </top>
+
+    <center>
+        <HBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <VBox spacing="10">
+                <Label text="Map"/>
+                <Canvas fx:id="mapCanvas" width="850" height="650"/>
+            </VBox>
+
+            <VBox spacing="10" prefWidth="250">
+                <Label text="Controls"/>
+                <Button text="Build Road"/>
+                <Button text="Place Stop"/>
+                <Button text="Create Route"/>
+                <Button text="Save"/>
+                <Button text="Load"/>
+
+                <Label fx:id="stateLabel" text="State: PAUSED"/>
+                <Label fx:id="speedLabel" text="Speed: PAUSED"/>
+                <Label fx:id="timeLabel" text="Time: 0.0"/>
+            </VBox>
+        </HBox>
+    </center>
+
+    <right>
+        <VBox spacing="10" prefWidth="220">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="0"/>
+            </padding>
+            <Label text="Minimap"/>
+            <Canvas fx:id="minimapCanvas" width="200" height="200"/>
+        </VBox>
+    </right>
+
+</BorderPane>
