@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/TileType.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/TrafficLight.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/Tile.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/enums/GameSpeed.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/RoadShape.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/DecorationType.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/controller/GameController.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/main-view.fxml</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/persistence/SaveService.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/GridPos.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/ui/MapRenderer.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/system/TrafficLightSystem.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/GameMap.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/Game.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/system/GameClock.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/system/MinimapSystem.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/persistence/GameSnapshot.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/MapGenerator.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/Main.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/TrafficLightState.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/enums/GameState.java</file>
+            <file>file:/C:/Users/dell/OneDrive/Documents/NetBeansProjects/routeandriches/src/routeandriches/model/Vehicle.java</file>
+        </group>
+    </open-files>
+</project-private>

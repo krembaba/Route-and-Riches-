@@ -5,6 +5,7 @@
 package routeandriches;
 
 import javafx.application.Application;
+import static javafx.application.Application.launch;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -17,12 +18,14 @@ public class Main extends Application {
                 getClass().getResource("main-view.fxml")
         );
 
-        Scene scene = new Scene(loader.load(), 1200, 800);
+        Scene scene = new Scene(loader.load(), 1350, 780);
 
         stage.setTitle("Route and Riches");
         stage.setScene(scene);
-        stage.setMinWidth(1000);
-        stage.setMinHeight(700);
+        stage.setMinWidth(1200);
+        stage.setMinHeight(720);
+        
+        stage.setFullScreen(true);
         stage.show();
     }
 

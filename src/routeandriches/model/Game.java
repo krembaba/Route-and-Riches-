@@ -11,10 +11,13 @@ import routeandriches.system.GameClock;
 public class Game {
     private GameState gameState;
     private final GameClock gameClock;
-
+    private final GameMap gameMap;
+    
+    
     public Game() {
         this.gameState = GameState.PAUSED;
         this.gameClock = new GameClock();
+        this.gameMap = new GameMap(60,90);
     }
 
     public GameState getGameState() {
@@ -23,6 +26,10 @@ public class Game {
 
     public GameClock getGameClock() {
         return gameClock;
+    }
+
+    public GameMap getGameMap() {
+        return gameMap;
     }
 
     public void start() {
