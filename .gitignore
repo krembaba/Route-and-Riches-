@@ -1,7 +1,5 @@
 # Build output
 build/
-dist/
-*.class
 
 # NetBeans private files
 nbproject/private/
