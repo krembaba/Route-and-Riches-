@@ -1,1 +1,22 @@
-/src/routeandriches.zip
+# Build output
+build/
+dist/
+*.class
+
+# NetBeans private files
+nbproject/private/
+
+src/routeandriches.zip
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Extra safety
+build
