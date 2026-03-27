@@ -125,8 +125,8 @@
                             <Button fx:id="buildRoadButton" text="Build Road" onAction="#handleBuildRoadMode"/>
                             <Button fx:id="placeStopButton" text="Place Stop" onAction="#handlePlaceStopMode"/>
                             <Button fx:id="createRouteButton" text="Create Route" onAction="#handleCreateRouteMode"/>
-                            <Button fx:id="spawnBusButton" text="Spawn Bus" onAction="#handleSpawnBusMode"/>
-                            <Button fx:id="spawnTramButton" text="Spawn Tram" onAction="#handleSpawnTramMode"/>
+                            <Button fx:id="spawnBusButton" text="Buy Bus" onAction="#handleSpawnBusMode"/>
+                            <Button fx:id="spawnTramButton" text="Buy Tram" onAction="#handleSpawnTramMode"/>
                             <Separator/>
                             <Button text="Save" onAction="#handleSave"/>
                             <Button text="Load" onAction="#handleLoad"/>
