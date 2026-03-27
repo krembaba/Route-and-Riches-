@@ -17,4 +17,4 @@ Thumbs.db
 .vscode/
 
 # Extra safety
-build
+buildtarget/
