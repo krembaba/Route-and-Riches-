@@ -1,89 +1,73 @@
 package routeandriches.model;
 
-import java.util.ArrayList;
 import java.util.List;
+import routeandriches.model.enums.VehicleType;
 
 public class Vehicle {
 
+    private final VehicleType type;
     private double x;
     private double y;
-    private double speed = 70.0;
-    private final double tileSize = 24.0;
+    private double speed;
+    private Route assignedRoute;
+    private int pathIndex;
 
-    private final List<GridPos> routePath = new ArrayList<>();
-    private int targetIndex = 0;
+    public Vehicle(VehicleType type, double x, double y) {
+        this(type, x, y, type == VehicleType.TRAM ? 40 : 50);
+    }
 
-    public Vehicle(double x, double y) {
+    public Vehicle(VehicleType type, double x, double y, double speed) {
+        this.type = type;
         this.x = x;
         this.y = y;
+        this.speed = speed;
+        this.pathIndex = 0;
     }
 
-    public Vehicle(List<GridPos> path) {
-        setRoute(path);
+    public void assignRoute(Route route, double tileSize) {
+        this.assignedRoute = route;
+        this.pathIndex = 0;
+
+        if (route != null && route.isValid()) {
+            GridPos start = route.getPath().get(0);
+            this.x = centerX(start, tileSize);
+            this.y = centerY(start, tileSize);
+        }
     }
 
-    public void setRoute(List<GridPos> path) {
-        routePath.clear();
-
-        if (path == null || path.isEmpty()) {
-            targetIndex = 0;
+    public void update(double deltaSeconds, double tileSize) {
+        if (assignedRoute == null || !assignedRoute.isValid()) {
             return;
         }
 
-        routePath.addAll(path);
-
-        GridPos first = routePath.get(0);
-        this.x = tileCenterX(first.getCol()) - 5;
-        this.y = tileCenterY(first.getRow()) - 5;
-
-        targetIndex = routePath.size() > 1 ? 1 : 0;
-    }
-
-    public void update(double delta) {
-        if (routePath.isEmpty() || routePath.size() == 1) {
+        List<GridPos> path = assignedRoute.getPath();
+        if (path.size() < 2) {
             return;
         }
 
-        GridPos target = routePath.get(targetIndex);
-        double targetX = tileCenterX(target.getCol()) - 5;
-        double targetY = tileCenterY(target.getRow()) - 5;
+        int nextIndex = (pathIndex + 1) % path.size();
+        GridPos target = path.get(nextIndex);
+
+        double targetX = centerX(target, tileSize);
+        double targetY = centerY(target, tileSize);
 
         double dx = targetX - x;
         double dy = targetY - y;
         double distance = Math.sqrt(dx * dx + dy * dy);
+        double moveDistance = speed * deltaSeconds;
 
-        if (distance < 1.0) {
+        if (distance <= moveDistance) {
             x = targetX;
             y = targetY;
-            targetIndex++;
-
-            if (targetIndex >= routePath.size()) {
-                targetIndex = 0;
-            }
-            return;
-        }
-
-        double move = speed * delta;
-        if (move >= distance) {
-            x = targetX;
-            y = targetY;
-            targetIndex++;
-
-            if (targetIndex >= routePath.size()) {
-                targetIndex = 0;
-            }
-        } else {
-            x += (dx / distance) * move;
-            y += (dy / distance) * move;
+            pathIndex = nextIndex;
+        } else if (distance > 0) {
+            x += (dx / distance) * moveDistance;
+            y += (dy / distance) * moveDistance;
         }
     }
 
-    private double tileCenterX(int col) {
-        return col * tileSize + tileSize / 2.0;
-    }
-
-    private double tileCenterY(int row) {
-        return row * tileSize + tileSize / 2.0;
+    public VehicleType getType() {
+        return type;
     }
 
     public double getX() {
@@ -92,5 +76,79 @@ public class Vehicle {
 
     public double getY() {
         return y;
+    }
+
+    public double getSpeed() {
+        return speed;
+    }
+
+    public Route getAssignedRoute() {
+        return assignedRoute;
+    }
+
+    public int getPathIndex() {
+        return pathIndex;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public String toSaveString() {
+        String routeName = assignedRoute != null ? assignedRoute.getName() : "NONE";
+        return type + "|" + x + "|" + y + "|" + speed + "|" + routeName + "|" + pathIndex;
+    }
+
+    public static Vehicle fromSaveString(String data, List<Route> routes) {
+        try {
+            String[] parts = data.split("\\|");
+            if (parts.length < 6) {
+                return null;
+            }
+
+            VehicleType type = VehicleType.valueOf(parts[0]);
+            double x = Double.parseDouble(parts[1]);
+            double y = Double.parseDouble(parts[2]);
+            double speed = Double.parseDouble(parts[3]);
+            String routeName = parts[4];
+            int savedPathIndex = Integer.parseInt(parts[5]);
+
+            Vehicle vehicle = new Vehicle(type, x, y, speed);
+
+            if (!"NONE".equals(routeName)) {
+                Route route = findRouteByName(routes, routeName);
+                if (route != null) {
+                    vehicle.assignedRoute = route;
+                    int maxIndex = Math.max(0, route.getPath().size() - 1);
+                    vehicle.pathIndex = Math.min(savedPathIndex, maxIndex);
+                }
+            }
+
+            return vehicle;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Route findRouteByName(List<Route> routes, String routeName) {
+        if (routes == null) {
+            return null;
+        }
+
+        for (Route route : routes) {
+            if (route.getName().equals(routeName)) {
+                return route;
+            }
+        }
+
+        return null;
+    }
+
+    private double centerX(GridPos pos, double tileSize) {
+        return pos.getCol() * tileSize + tileSize / 2.0;
+    }
+
+    private double centerY(GridPos pos, double tileSize) {
+        return pos.getRow() * tileSize + tileSize / 2.0;
     }
 }
