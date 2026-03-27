@@ -18,14 +18,14 @@ public class Main extends Application {
                 getClass().getResource("main-view.fxml")
         );
 
-        Scene scene = new Scene(loader.load(), 1350, 780);
+        Scene scene = new Scene(loader.load(), 1280, 680);
 
         stage.setTitle("Route and Riches");
         stage.setScene(scene);
-        stage.setMinWidth(1200);
-        stage.setMinHeight(720);
+        stage.setMinWidth(1100);
+        stage.setMinHeight(600);
         
-        stage.setFullScreen(true);
+        stage.setFullScreen(false);
         stage.show();
     }
 
