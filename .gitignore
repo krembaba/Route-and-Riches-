@@ -1,12 +1,22 @@
 # Java build artifacts
 *.class
+build/
+target/
+buildtarget/
+
+# NetBeans private files
+nbproject/private/
 
 # Local runtime files
 savegame.json
+*.log
 
 # Local JavaFX SDK (do not version control)
 tools/
+src/routeandriches.zip
 
 # IDE/system
+.idea/
+.vscode/
 .DS_Store
 Thumbs.db
