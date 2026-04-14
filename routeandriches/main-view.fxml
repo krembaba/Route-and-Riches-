@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="routeandriches.controller.GameController"
+            stylesheets="@ui-theme.css"
+            styleClass="app-root">
+
+    <top>
+        <VBox spacing="7" styleClass="top-shell">
+            <Label text="Top Control Bar" styleClass="top-caption"/>
+            <HBox alignment="CENTER_LEFT" spacing="12" styleClass="top-toolbar">
+                <VBox spacing="1">
+                    <Label text="Route and Riches" styleClass="game-title"/>
+                    <Label text="Transit Management Command Center" styleClass="game-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="moneyLabel" text="City Treasury: $1,000" styleClass="money-pill"/>
+                <Button text="Pause" onAction="#handlePause" styleClass="top-action-button"/>
+                <Button text="Normal" onAction="#handleNormalSpeed" styleClass="top-action-button"/>
+                <Button text="Fast" onAction="#handleFastSpeed" styleClass="top-action-button"/>
+                <Button text="Start" onAction="#handleStart" styleClass="start-button"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <HBox spacing="0" styleClass="center-shell">
+            <VBox minWidth="238" prefWidth="238" maxWidth="238" spacing="10" styleClass="sidebar-left">
+                <VBox spacing="9" styleClass="panel-card">
+                    <Label text="Navigator" styleClass="card-title"/>
+                    <StackPane styleClass="minimap-frame">
+                        <Canvas fx:id="minimapCanvas" width="190" height="130"/>
+                    </StackPane>
+                    <Label text="Use the minimap to jump to districts and monitor city spread." wrapText="true" styleClass="card-note"/>
+                </VBox>
+                <VBox spacing="6" styleClass="panel-card compact-card">
+                    <Label text="Quick Input" styleClass="card-title"/>
+                    <Label text="Drag the map to pan" styleClass="bullet-line"/>
+                    <Label text="Use toolbar modes to place roads, stops, and routes" wrapText="true" styleClass="bullet-line"/>
+                    <Label text="Buy buses or trams after creating a route" wrapText="true" styleClass="bullet-line"/>
+                </VBox>
+            </VBox>
+
+            <VBox spacing="8" minWidth="0" HBox.hgrow="ALWAYS" styleClass="map-zone">
+                <HBox styleClass="map-top-strip">
+                    <Label text="City Grid" styleClass="map-strip-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="Drag to pan the world" styleClass="map-strip-hint"/>
+                </HBox>
+
+                <StackPane styleClass="map-shell" VBox.vgrow="ALWAYS">
+                    <ScrollPane fx:id="mapScrollPane"
+                                pannable="true"
+                                fitToWidth="false"
+                                fitToHeight="false"
+                                hbarPolicy="NEVER"
+                                vbarPolicy="NEVER"
+                                prefViewportWidth="920"
+                                prefViewportHeight="560"
+                                VBox.vgrow="ALWAYS"
+                                styleClass="map-scroll">
+                        <content>
+                            <Canvas fx:id="mapCanvas" width="1400" height="900"/>
+                        </content>
+                    </ScrollPane>
+                </StackPane>
+            </VBox>
+
+            <VBox minWidth="345" prefWidth="345" maxWidth="345" spacing="9" styleClass="sidebar-right">
+                <Label text="Information Panel" styleClass="side-title"/>
+                <Separator styleClass="section-separator"/>
+
+                <VBox spacing="6" styleClass="stats-card">
+                    <Label text="Simulation" styleClass="stats-title"/>
+                    <Label fx:id="stateLabel" text="State: PAUSED" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="speedLabel" text="Speed: PAUSED" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="timeLabel" text="Time: 0.0" wrapText="true" styleClass="stats-line"/>
+                </VBox>
+
+                <VBox spacing="6" styleClass="stats-card">
+                    <Label text="Fleet" styleClass="stats-title"/>
+                    <Label fx:id="vehicleCountLabel" text="Vehicles: 0" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="routeCountLabel" text="Routes: 0" wrapText="true" styleClass="stats-line"/>
+                </VBox>
+
+                <VBox spacing="6" VBox.vgrow="ALWAYS" styleClass="stats-card selected-card">
+                    <Label text="Selected Object" styleClass="stats-title"/>
+                    <Label fx:id="buildModeLabel" text="Mode: Build Road" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="hintLabel" text="No selection" wrapText="true" styleClass="hint-line"/>
+                </VBox>
+
+                <VBox spacing="6" styleClass="stats-card">
+                    <Label text="Statistics" styleClass="stats-title"/>
+                    <Label fx:id="stopCountLabel" text="Stops: 0" wrapText="true" styleClass="stats-line"/>
+                    <Label text="Passengers: --" wrapText="true" styleClass="stats-line"/>
+                    <Label text="Total Income: --" wrapText="true" styleClass="stats-line"/>
+                    <HBox spacing="8">
+                        <Button text="Save" onAction="#handleSave" styleClass="secondary-action-button"/>
+                        <Button text="Load" onAction="#handleLoad" styleClass="secondary-action-button"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </HBox>
+    </center>
+
+    <bottom>
+        <VBox spacing="6" styleClass="bottom-shell">
+            <Label text="Toolbar" styleClass="top-caption"/>
+            <HBox alignment="CENTER" spacing="12" styleClass="bottom-toolbar">
+                <Button fx:id="buildRoadButton" text="Build Road" onAction="#handleBuildRoadMode" styleClass="mode-button"/>
+                <Button fx:id="placeStopButton" text="Place Stop" onAction="#handlePlaceStopMode" styleClass="mode-button"/>
+                <Button fx:id="placeTrafficLightButton" text="Traffic Lights" onAction="#handlePlaceTrafficLightMode" styleClass="mode-button"/>
+                <Button fx:id="createRouteButton" text="Create Route" onAction="#handleCreateRouteMode" styleClass="mode-button"/>
+                <Button fx:id="spawnBusButton" text="Buy Bus" onAction="#handleSpawnBusMode" styleClass="mode-button"/>
+                <Button fx:id="spawnTramButton" text="Buy Tram" onAction="#handleSpawnTramMode" styleClass="mode-button"/>
+            </HBox>
+        </VBox>
+    </bottom>
+</BorderPane>

@@ -1,0 +1,12 @@
+# Java build artifacts
+*.class
+
+# Local runtime files
+savegame.json
+
+# Local JavaFX SDK (do not version control)
+tools/
+
+# IDE/system
+.DS_Store
+Thumbs.db
