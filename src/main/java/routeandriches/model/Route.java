@@ -1,5 +1,5 @@
 package routeandriches.model;
-
+//Route and Riches
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +26,21 @@ public class Route {
 
     public List<GridPos> getPath() {
         return Collections.unmodifiableList(path);
+    }
+
+    public void updateStopsAndPath(List<GridPos> newStops, List<GridPos> newPath) {
+        stops.clear();
+        path.clear();
+        if (newStops != null) {
+            stops.addAll(newStops);
+        }
+        if (newPath != null) {
+            path.addAll(newPath);
+        }
+    }
+
+    public boolean containsStop(GridPos position) {
+        return position != null && stops.contains(position);
     }
 
     public boolean isValid() {

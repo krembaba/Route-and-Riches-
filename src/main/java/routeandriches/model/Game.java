@@ -6,7 +6,7 @@ import routeandriches.model.enums.GameSpeed;
 import routeandriches.model.enums.GameState;
 import routeandriches.model.enums.VehicleType;
 import routeandriches.system.GameClock;
-
+//Route and Riches
 public class Game {
 
     private static final int STARTING_MONEY = 1000;
@@ -47,6 +47,12 @@ public class Game {
         this.money = Math.max(0, money);
     }
 
+    public void earnMoney(int amount) {
+        if (amount > 0) {
+            money += amount;
+        }
+    }
+
     public boolean canAfford(int amount) {
         return amount >= 0 && money >= amount;
     }
@@ -73,6 +79,10 @@ public class Game {
         }
     }
 
+    public boolean removeVehicle(Vehicle vehicle) {
+        return vehicle != null && vehicles.remove(vehicle);
+    }
+
     public List<Route> getRoutes() {
         return routes;
     }
@@ -87,6 +97,10 @@ public class Game {
         }
         routes.add(route);
         return true;
+    }
+
+    public boolean removeRoute(Route route) {
+        return route != null && routes.remove(route);
     }
 
     public boolean buyVehicle(VehicleType type, int cost, Route route, double tileSize) {

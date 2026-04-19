@@ -8,7 +8,7 @@ import routeandriches.model.GameMap;
 import routeandriches.model.RoadShape;
 import routeandriches.model.Tile;
 import routeandriches.model.TileType;
-
+//Route and Riches
 public class MapRenderer {
 
     private final double tileSize;
@@ -278,4 +278,21 @@ public class MapRenderer {
             }
         }
     }
+
+
+    public void drawSelectionMarker(GraphicsContext gc, int row, int col, Color color) {
+        double x = col * tileSize;
+        double y = row * tileSize;
+        gc.setStroke(color);
+        gc.setLineWidth(3);
+        gc.strokeRoundRect(x + 2, y + 2, tileSize - 4, tileSize - 4, 8, 8);
+    }
+
+    public void drawVehicleSelection(GraphicsContext gc, double x, double y, Color color) {
+        double radius = 9;
+        gc.setStroke(color);
+        gc.setLineWidth(2.5);
+        gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
+    }
+
 }

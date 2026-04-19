@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package routeandriches.ui;
 
 import javafx.scene.canvas.GraphicsContext;
@@ -10,33 +6,21 @@ import routeandriches.model.GameMap;
 import routeandriches.model.TileType;
 import routeandriches.model.Vehicle;
 import routeandriches.system.MinimapSystem;
-
-/**
- *
- * @author dell
- */
+//Route and Riches
 public class MinimapRenderer {
-    public void drawMinimap(GraphicsContext gc,
-                            GameMap map,
-                            MinimapSystem minimapSystem,
-                            Vehicle vehicle) {
 
+    public void drawMinimap(GraphicsContext gc, GameMap map, MinimapSystem minimapSystem, Vehicle vehicle, double tileSize) {
         double canvasWidth = gc.getCanvas().getWidth();
         double canvasHeight = gc.getCanvas().getHeight();
+        double miniTileWidth = canvasWidth / map.getCols();
+        double miniTileHeight = canvasHeight / map.getRows();
 
         gc.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        double miniTileWidth = minimapSystem.getMiniTileWidth(canvasWidth);
-        double miniTileHeight = minimapSystem.getMiniTileHeight(canvasHeight);
-
-        
-        gc.setFill(Color.web("#18222d"));
+        gc.setFill(Color.rgb(36, 38, 42, 0.92));
         gc.fillRoundRect(0, 0, canvasWidth, canvasHeight, 12, 12);
 
-        
         for (int row = 0; row < map.getRows(); row++) {
             for (int col = 0; col < map.getCols(); col++) {
-
                 TileType tileType = map.getTile(row, col).getType();
 
                 switch (tileType) {
@@ -54,9 +38,7 @@ public class MinimapRenderer {
             }
         }
 
-        
         if (vehicle != null) {
-            double tileSize = 24.0; 
             double vehicleCol = vehicle.getX() / tileSize;
             double vehicleRow = vehicle.getY() / tileSize;
 
@@ -70,9 +52,34 @@ public class MinimapRenderer {
             gc.strokeOval(miniX, miniY, 5, 5);
         }
 
-        
         gc.setStroke(Color.rgb(255, 255, 255, 0.6));
         gc.setLineWidth(1.5);
         gc.strokeRoundRect(1, 1, canvasWidth - 2, canvasHeight - 2, 12, 12);
+    }
+
+    public void drawViewport(GraphicsContext gc, GameMap map,
+                             double viewportLeft, double viewportTop,
+                             double viewportWidth, double viewportHeight,
+                             double tileSize) {
+        double canvasWidth = gc.getCanvas().getWidth();
+        double canvasHeight = gc.getCanvas().getHeight();
+        double totalMapWidth = map.getCols() * tileSize;
+        double totalMapHeight = map.getRows() * tileSize;
+
+        if (totalMapWidth <= 0 || totalMapHeight <= 0) {
+            return;
+        }
+
+        double scaleX = canvasWidth / totalMapWidth;
+        double scaleY = canvasHeight / totalMapHeight;
+
+        gc.setStroke(Color.rgb(255, 230, 140, 0.95));
+        gc.setLineWidth(2);
+        gc.strokeRoundRect(viewportLeft * scaleX,
+                viewportTop * scaleY,
+                Math.max(8, viewportWidth * scaleX),
+                Math.max(8, viewportHeight * scaleY),
+                6,
+                6);
     }
 }

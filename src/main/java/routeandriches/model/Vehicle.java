@@ -2,7 +2,7 @@ package routeandriches.model;
 
 import java.util.List;
 import routeandriches.model.enums.VehicleType;
-
+//Route and Riches
 public class Vehicle {
 
     private final VehicleType type;
@@ -33,6 +33,11 @@ public class Vehicle {
             this.x = centerX(start, tileSize);
             this.y = centerY(start, tileSize);
         }
+    }
+
+    public void clearRoute() {
+        this.assignedRoute = null;
+        this.pathIndex = 0;
     }
 
     public void update(double deltaSeconds, double tileSize) {

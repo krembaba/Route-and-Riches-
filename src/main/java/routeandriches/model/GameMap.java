@@ -1,5 +1,5 @@
 package routeandriches.model;
-
+//Route and Riches
 public class GameMap {
 
     private final int rows;
@@ -51,6 +51,21 @@ public class GameMap {
         return true;
     }
 
+    public boolean removeRoad(int row, int col) {
+        validatePosition(row, col);
+        Tile tile = tiles[row][col];
+        if (tile.getType() != TileType.ROAD) {
+            return false;
+        }
+
+        tile.setType(TileType.EMPTY);
+        tile.setBuildable(true);
+        tile.setDecorationType(DecorationType.NONE);
+        tile.setVisualVariant(0);
+        refreshRoadShapesAround(row, col);
+        return true;
+    }
+
     public boolean placeStop(int row, int col) {
         validatePosition(row, col);
         Tile tile = tiles[row][col];
@@ -62,6 +77,21 @@ public class GameMap {
         tile.setType(TileType.STOP);
         tile.setBuildable(false);
         tile.setDecorationType(DecorationType.NONE);
+        refreshRoadShapesAround(row, col);
+        return true;
+    }
+
+    public boolean removeStop(int row, int col) {
+        validatePosition(row, col);
+        Tile tile = tiles[row][col];
+        if (tile.getType() != TileType.STOP) {
+            return false;
+        }
+
+        tile.setType(TileType.EMPTY);
+        tile.setBuildable(true);
+        tile.setDecorationType(DecorationType.NONE);
+        tile.setVisualVariant(0);
         refreshRoadShapesAround(row, col);
         return true;
     }
