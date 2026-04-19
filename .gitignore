@@ -1,0 +1,27 @@
+# Java build artifacts
+*.class
+build/
+target/
+buildtarget/
+
+# NetBeans private files
+nbproject/private/
+
+# Local runtime files
+savegame.json
+*.log
+run-game.ps1
+
+# Local JavaFX SDK (do not version control)
+tools/
+src/routeandriches.zip
+
+# Project docs/specs excluded by request
+*.md
+Structure/
+
+# IDE/system
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
