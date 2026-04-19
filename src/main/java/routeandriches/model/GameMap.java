@@ -1,5 +1,5 @@
 package routeandriches.model;
-
+//Route and Riches
 public class GameMap {
 
     private final int rows;

@@ -6,7 +6,7 @@ import routeandriches.model.GameMap;
 import routeandriches.model.TileType;
 import routeandriches.model.Vehicle;
 import routeandriches.system.MinimapSystem;
-
+//Route and Riches
 public class MinimapRenderer {
 
     public void drawMinimap(GraphicsContext gc, GameMap map, MinimapSystem minimapSystem, Vehicle vehicle, double tileSize) {

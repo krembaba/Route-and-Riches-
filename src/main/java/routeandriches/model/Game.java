@@ -6,7 +6,7 @@ import routeandriches.model.enums.GameSpeed;
 import routeandriches.model.enums.GameState;
 import routeandriches.model.enums.VehicleType;
 import routeandriches.system.GameClock;
-
+//Route and Riches
 public class Game {
 
     private static final int STARTING_MONEY = 1000;

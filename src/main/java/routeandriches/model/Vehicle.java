@@ -2,7 +2,7 @@ package routeandriches.model;
 
 import java.util.List;
 import routeandriches.model.enums.VehicleType;
-
+//Route and Riches
 public class Vehicle {
 
     private final VehicleType type;

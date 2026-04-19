@@ -8,7 +8,7 @@ import routeandriches.model.GameMap;
 import routeandriches.model.RoadShape;
 import routeandriches.model.Tile;
 import routeandriches.model.TileType;
-
+//Route and Riches
 public class MapRenderer {
 
     private final double tileSize;

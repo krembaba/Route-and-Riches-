@@ -1,5 +1,5 @@
 package routeandriches.controller;
-
+//Route and Riches
 public enum InteractionMode {
     BUILD_ROAD,
     REMOVE_ROAD,
