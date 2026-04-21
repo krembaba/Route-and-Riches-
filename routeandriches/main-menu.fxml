@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="routeandriches.controller.MainMenuController"
+            stylesheets="@ui-theme.css"
+            styleClass="menu-root">
+
+    <top>
+        <VBox spacing="8" styleClass="menu-top-shell">
+            <Label text="Route and Riches" styleClass="menu-title"/>
+            <Label text="Transit Management Simulator" styleClass="menu-subtitle"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="16" alignment="CENTER" styleClass="menu-card">
+            <StackPane styleClass="menu-logo-frame">
+                <ImageView fx:id="logoImageView"
+                           fitWidth="420"
+                           fitHeight="270"
+                           preserveRatio="true"
+                           pickOnBounds="true"
+                           smooth="true"/>
+                <Label fx:id="logoFallbackLabel" text="ROUTE &amp; RICHES" styleClass="menu-header"/>
+            </StackPane>
+            <Label text="Start a fresh city or load an existing save file." styleClass="menu-description"/>
+
+            <Button text="Start New Game" onAction="#handleNewGame" styleClass="menu-action-button"/>
+            <Button text="Load Save File" onAction="#handleLoadSaveFile" styleClass="menu-action-button"/>
+            <Button text="Exit Game" onAction="#handleExitGame" styleClass="menu-exit-button"/>
+            <Label fx:id="menuStatusLabel" text="Ready" styleClass="menu-status"/>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox styleClass="menu-bottom-shell">
+            <Label text="Tip: Save files are JSON files created from the in-game Save button." styleClass="menu-hint"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </bottom>
+
+    <padding>
+        <Insets top="22" right="28" bottom="18" left="28"/>
+    </padding>
+</BorderPane>

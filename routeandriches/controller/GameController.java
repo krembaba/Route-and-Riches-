@@ -14,16 +14,24 @@ import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.SnapshotParameters;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
+import routeandriches.model.DecorationType;
 import routeandriches.model.Game;
 import routeandriches.model.GameMap;
 import routeandriches.model.GridPos;
 import routeandriches.model.Passenger;
 import routeandriches.model.RoadShape;
 import routeandriches.model.Route;
+import routeandriches.model.Stop;
+import routeandriches.model.TileType;
 import routeandriches.model.TrafficLight;
 import routeandriches.model.Vehicle;
 import routeandriches.model.enums.GameState;
@@ -38,6 +46,8 @@ import routeandriches.ui.MinimapRenderer;
 public class GameController {
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
+    private static final long FRAME_INTERVAL_NANOS = 33_000_000L; // ~30 FPS
+    private static final long MINIMAP_INTERVAL_NANOS = 100_000_000L; // ~10 FPS
 
     private InteractionMode interactionMode = InteractionMode.BUILD_ROAD;
 
@@ -52,9 +62,15 @@ public class GameController {
     private final List<GridPos> pendingRouteStops = new ArrayList<>();
     private int hoveredRow = -1;
     private int hoveredCol = -1;
+    private long lastMinimapRenderNanos = 0L;
+    private boolean mapStaticDirty = true;
+    private boolean minimapDirty = true;
+    private Canvas mapStaticCanvas;
+    private WritableImage mapStaticImage;
 
     @FXML private Canvas mapCanvas;
     @FXML private Canvas minimapCanvas;
+    @FXML private ScrollPane mapScrollPane;
     @FXML private Label stateLabel;
     @FXML private Label speedLabel;
     @FXML private Label timeLabel;
@@ -71,6 +87,8 @@ public class GameController {
     @FXML private Label vehicleCountLabel;
     @FXML private Label routeCountLabel;
     @FXML private Label stopCountLabel;
+    @FXML private Label passengerWaitingLabel;
+    @FXML private Label passengerOnboardLabel;
 
     private AnimationTimer gameLoop;
     private long lastUpdate = 0L;
@@ -79,6 +97,8 @@ public class GameController {
     public void initialize() {
         mapCanvas.setWidth(game.getGameMap().getCols() * mapRenderer.getTileSize());
         mapCanvas.setHeight(game.getGameMap().getRows() * mapRenderer.getTileSize());
+        mapStaticCanvas = new Canvas(mapCanvas.getWidth(), mapCanvas.getHeight());
+        mapStaticDirty = true;
 
         setupGameLoop();
         setupMouseInput();
@@ -97,12 +117,17 @@ public class GameController {
                     return;
                 }
 
-                double deltaSeconds = (now - lastUpdate) / 1_000_000_000.0;
+                long elapsedNanos = now - lastUpdate;
+                if (elapsedNanos < FRAME_INTERVAL_NANOS) {
+                    return;
+                }
+
+                double deltaSeconds = elapsedNanos / 1_000_000_000.0;
                 lastUpdate = now;
 
                 game.update(deltaSeconds, mapRenderer.getTileSize());
 
-                render();
+                render(now);
                 updateLabels();
                 updateHud();
             }
@@ -112,8 +137,14 @@ public class GameController {
 
     private void setupMouseInput() {
         mapCanvas.setOnMouseMoved(e -> {
-            hoveredCol = (int) (e.getX() / mapRenderer.getTileSize());
-            hoveredRow = (int) (e.getY() / mapRenderer.getTileSize());
+            GridPos pointerPos = resolveGridPositionFromEvent(e);
+            if (pointerPos == null) {
+                hoveredRow = -1;
+                hoveredCol = -1;
+            } else {
+                hoveredRow = pointerPos.getRow();
+                hoveredCol = pointerPos.getCol();
+            }
             render();
         });
 
@@ -124,8 +155,13 @@ public class GameController {
         });
 
         mapCanvas.setOnMouseClicked(e -> {
-            int col = (int) (e.getX() / mapRenderer.getTileSize());
-            int row = (int) (e.getY() / mapRenderer.getTileSize());
+            GridPos pointerPos = resolveGridPositionFromEvent(e);
+            if (pointerPos == null) {
+                return;
+            }
+
+            int row = pointerPos.getRow();
+            int col = pointerPos.getCol();
 
             GameMap map = game.getGameMap();
             if (!map.isWithinBounds(row, col)) {
@@ -141,6 +177,7 @@ public class GameController {
                         hintLabel.setText("Need $" + cost + " to build a road");
                     } else {
                         map.placeRoad(row, col);
+                        markMapStaticDirty();
                         hintLabel.setText("Road placed (-$" + cost + ")");
                     }
                 }
@@ -153,6 +190,7 @@ public class GameController {
                         hintLabel.setText("Need $" + cost + " to place a stop");
                     } else {
                         map.placeStop(row, col);
+                        markMapStaticDirty();
                         hintLabel.setText("Stop placed (-$" + cost + ")");
                     }
                 }
@@ -179,6 +217,87 @@ public class GameController {
             updateHud();
             render();
         });
+
+        minimapCanvas.setOnMouseClicked(e -> {
+            GridPos minimapTarget = resolveGridPositionFromMinimapEvent(e);
+            if (minimapTarget == null) {
+                return;
+            }
+
+            centerMainViewportOn(minimapTarget);
+            hintLabel.setText("Jumped to district: " + minimapTarget.getRow() + ", " + minimapTarget.getCol());
+        });
+    }
+
+    private GridPos resolveGridPositionFromEvent(MouseEvent event) {
+        Point2D localPoint = mapCanvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+        int col = (int) Math.floor(localPoint.getX() / mapRenderer.getTileSize());
+        int row = (int) Math.floor(localPoint.getY() / mapRenderer.getTileSize());
+
+        if (!game.getGameMap().isWithinBounds(row, col)) {
+            return null;
+        }
+
+        return new GridPos(row, col);
+    }
+
+    private GridPos resolveGridPositionFromMinimapEvent(MouseEvent event) {
+        if (minimapCanvas == null) {
+            return null;
+        }
+
+        double miniWidth = minimapCanvas.getWidth();
+        double miniHeight = minimapCanvas.getHeight();
+        if (miniWidth <= 0 || miniHeight <= 0) {
+            return null;
+        }
+
+        double x = clamp(event.getX(), 0, miniWidth - 0.0001);
+        double y = clamp(event.getY(), 0, miniHeight - 0.0001);
+
+        double miniTileWidth = minimapSystem.getMiniTileWidth(miniWidth);
+        double miniTileHeight = minimapSystem.getMiniTileHeight(miniHeight);
+
+        int col = (int) Math.floor(x / miniTileWidth);
+        int row = (int) Math.floor(y / miniTileHeight);
+
+        if (!game.getGameMap().isWithinBounds(row, col)) {
+            return null;
+        }
+
+        return new GridPos(row, col);
+    }
+
+    private void centerMainViewportOn(GridPos target) {
+        if (mapScrollPane == null || target == null) {
+            return;
+        }
+
+        double viewportWidth = mapScrollPane.getViewportBounds().getWidth();
+        double viewportHeight = mapScrollPane.getViewportBounds().getHeight();
+        if (viewportWidth <= 0 || viewportHeight <= 0) {
+            return;
+        }
+
+        double tileSize = mapRenderer.getTileSize();
+        double targetX = target.getCol() * tileSize + tileSize * 0.5;
+        double targetY = target.getRow() * tileSize + tileSize * 0.5;
+
+        double contentWidth = mapCanvas.getWidth();
+        double contentHeight = mapCanvas.getHeight();
+
+        double hDenominator = Math.max(1.0, contentWidth - viewportWidth);
+        double vDenominator = Math.max(1.0, contentHeight - viewportHeight);
+
+        double hValue = (targetX - viewportWidth * 0.5) / hDenominator;
+        double vValue = (targetY - viewportHeight * 0.5) / vDenominator;
+
+        mapScrollPane.setHvalue(clamp(hValue, 0, 1));
+        mapScrollPane.setVvalue(clamp(vValue, 0, 1));
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private void handleRouteSelection(int row, int col) {
@@ -383,6 +502,7 @@ public class GameController {
             snapshot.setElapsedSeconds(game.getGameClock().getElapsedSeconds());
             snapshot.setGameSpeed(game.getGameClock().getGameSpeed().name());
             snapshot.setGameState(game.getGameState().name());
+            snapshot.setMapData(serializeMap());
             snapshot.setVehicleData(serializeVehicles());
             snapshot.setRouteData(serializeRoutes());
             snapshot.setTrafficLightData(serializeTrafficLights());
@@ -398,10 +518,15 @@ public class GameController {
 
     @FXML
     private void handleLoad() {
+        loadGameFromFile("savegame.json");
+    }
+
+    public void loadGameFromFile(String filePath) {
         try {
-            GameSnapshot snapshot = saveService.load("savegame.json");
+            GameSnapshot snapshot = saveService.load(filePath);
             game.setMoney(snapshot.getMoney());
             game.getGameClock().setElapsedSeconds(snapshot.getElapsedSeconds());
+            restoreMap(snapshot.getMapData());
             restoreRoutes(snapshot.getRouteData());
             restoreVehicles(snapshot.getVehicleData());
             restoreTrafficLights(snapshot.getTrafficLightData());
@@ -411,7 +536,8 @@ public class GameController {
             focusedVehicle = getFocusedVehicle();
             pendingRouteStops.clear();
 
-            hintLabel.setText("Game loaded");
+            hintLabel.setText("Game loaded from " + filePath);
+            updateLabels();
             updateHud();
             render();
         } catch (Exception e) {
@@ -619,6 +745,14 @@ public class GameController {
         if (stopCountLabel != null) {
             stopCountLabel.setText("Stops: " + countStopsOnMap());
         }
+
+        if (passengerWaitingLabel != null) {
+            passengerWaitingLabel.setText("Waiting: " + game.getPassengerSystem().getTotalWaitingPassengers());
+        }
+
+        if (passengerOnboardLabel != null) {
+            passengerOnboardLabel.setText("Onboard: " + getTotalOnboardPassengers());
+        }
     }
 
     private int countStopsOnMap() {
@@ -633,6 +767,58 @@ public class GameController {
         }
 
         return count;
+    }
+
+    private List<String> serializeMap() {
+        List<String> mapData = new ArrayList<>();
+
+        for (int row = 0; row < game.getGameMap().getRows(); row++) {
+            for (int col = 0; col < game.getGameMap().getCols(); col++) {
+                var tile = game.getGameMap().getTile(row, col);
+                mapData.add(row + "|" + col
+                        + "|" + tile.getType().name()
+                        + "|" + tile.isBuildable()
+                        + "|" + tile.getDecorationType().name()
+                        + "|" + tile.getVisualVariant());
+            }
+        }
+
+        return mapData;
+    }
+
+    private void restoreMap(List<?> mapData) {
+        GameMap map = game.getGameMap();
+
+        if (mapData == null) {
+            return;
+        }
+
+        for (Object item : mapData) {
+            String[] parts = String.valueOf(item).split("\\|", -1);
+            if (parts.length < 6) {
+                continue;
+            }
+
+            try {
+                int row = Integer.parseInt(parts[0]);
+                int col = Integer.parseInt(parts[1]);
+                TileType type = TileType.valueOf(parts[2]);
+                boolean buildable = Boolean.parseBoolean(parts[3]);
+                DecorationType decoration = DecorationType.valueOf(parts[4]);
+                int visualVariant = Integer.parseInt(parts[5]);
+
+                if (!map.isWithinBounds(row, col)) {
+                    continue;
+                }
+
+                map.setTile(row, col, type, buildable, decoration, visualVariant);
+            } catch (Exception ignored) {
+                // Skip malformed map entries.
+            }
+        }
+
+        map.refreshRoadShapes();
+        markMapStaticDirty();
     }
 
     private List<String> serializeVehicles() {
@@ -972,8 +1158,18 @@ public class GameController {
     }
 
     private void render() {
+        render(System.nanoTime());
+    }
+
+    private void render(long nowNanos) {
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
-        mapRenderer.drawMap(gc, game.getGameMap());
+        rebuildMapStaticLayerIfNeeded();
+        gc.clearRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
+        if (mapStaticImage != null) {
+            gc.drawImage(mapStaticImage, 0, 0);
+        } else {
+            mapRenderer.drawMap(gc, game.getGameMap());
+        }
 
         if (hoveredRow >= 0 && hoveredCol >= 0 && game.getGameMap().isWithinBounds(hoveredRow, hoveredCol)) {
             boolean valid = switch (interactionMode) {
@@ -995,13 +1191,84 @@ public class GameController {
 
         drawTrafficLights(gc);
         drawRoutes(gc);
+        drawPassengerIndicators(gc);
 
-        Vehicle minimapVehicle = getFocusedVehicle();
-        GraphicsContext minimapGc = minimapCanvas.getGraphicsContext2D();
-        minimapRenderer.drawMinimap(minimapGc, game.getGameMap(), minimapSystem, minimapVehicle);
+        if (lastMinimapRenderNanos == 0L
+                || nowNanos - lastMinimapRenderNanos >= MINIMAP_INTERVAL_NANOS
+                || minimapDirty) {
+            Vehicle minimapVehicle = getFocusedVehicle();
+            GraphicsContext minimapGc = minimapCanvas.getGraphicsContext2D();
+            minimapRenderer.drawMinimap(minimapGc, game.getGameMap(), minimapSystem, game.getVehicles(), minimapVehicle);
+            lastMinimapRenderNanos = nowNanos;
+            minimapDirty = false;
+        }
 
         for (Vehicle currentVehicle : game.getVehicles()) {
             drawVehicle(gc, currentVehicle);
+        }
+    }
+
+    private void markMapStaticDirty() {
+        mapStaticDirty = true;
+        minimapDirty = true;
+    }
+
+    private void rebuildMapStaticLayerIfNeeded() {
+        if (!mapStaticDirty) {
+            return;
+        }
+
+        if (mapStaticCanvas == null) {
+            mapStaticCanvas = new Canvas(mapCanvas.getWidth(), mapCanvas.getHeight());
+        }
+
+        if (mapStaticCanvas.getWidth() != mapCanvas.getWidth()
+                || mapStaticCanvas.getHeight() != mapCanvas.getHeight()) {
+            mapStaticCanvas.setWidth(mapCanvas.getWidth());
+            mapStaticCanvas.setHeight(mapCanvas.getHeight());
+        }
+
+        GraphicsContext staticGc = mapStaticCanvas.getGraphicsContext2D();
+        mapRenderer.drawMap(staticGc, game.getGameMap());
+        mapStaticImage = mapStaticCanvas.snapshot(new SnapshotParameters(), mapStaticImage);
+        mapStaticDirty = false;
+    }
+
+    private int getTotalOnboardPassengers() {
+        int total = 0;
+        for (Vehicle vehicle : game.getVehicles()) {
+            total += vehicle.getOnboardCount();
+        }
+        return total;
+    }
+
+    private void drawPassengerIndicators(GraphicsContext gc) {
+        for (Stop stop : game.getPassengerSystem().getStops()) {
+            int waitingCount = stop.getWaitingCount();
+            if (waitingCount <= 0) {
+                continue;
+            }
+
+            GridPos position = stop.getPosition();
+            double tileX = position.getCol() * mapRenderer.getTileSize();
+            double tileY = position.getRow() * mapRenderer.getTileSize();
+            double badgeX = tileX + mapRenderer.getTileSize() * 0.56;
+            double badgeY = tileY + mapRenderer.getTileSize() * 0.04;
+            double badgeWidth = waitingCount >= 10 ? 15 : 12;
+            double badgeHeight = 10;
+
+            gc.setFill(Color.rgb(0, 0, 0, 0.35));
+            gc.fillRoundRect(badgeX + 0.8, badgeY + 0.8, badgeWidth, badgeHeight, 8, 8);
+            gc.setFill(Color.web("#f28b45"));
+            gc.fillRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8, 8);
+            gc.setStroke(Color.web("#6d3512"));
+            gc.setLineWidth(0.8);
+            gc.strokeRoundRect(badgeX, badgeY, badgeWidth, badgeHeight, 8, 8);
+
+            gc.setFill(Color.WHITE);
+            gc.setFont(javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 8));
+            String text = waitingCount > 99 ? "99+" : Integer.toString(waitingCount);
+            gc.fillText(text, badgeX + 2.2, badgeY + 7.8);
         }
     }
 

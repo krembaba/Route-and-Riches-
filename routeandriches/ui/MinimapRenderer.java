@@ -4,11 +4,13 @@
  */
 package routeandriches.ui;
 
+import java.util.List;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import routeandriches.model.GameMap;
 import routeandriches.model.TileType;
 import routeandriches.model.Vehicle;
+import routeandriches.model.enums.VehicleType;
 import routeandriches.system.MinimapSystem;
 
 /**
@@ -19,7 +21,8 @@ public class MinimapRenderer {
     public void drawMinimap(GraphicsContext gc,
                             GameMap map,
                             MinimapSystem minimapSystem,
-                            Vehicle vehicle) {
+                            List<Vehicle> vehicles,
+                            Vehicle focusedVehicle) {
 
         double canvasWidth = gc.getCanvas().getWidth();
         double canvasHeight = gc.getCanvas().getHeight();
@@ -54,20 +57,44 @@ public class MinimapRenderer {
             }
         }
 
-        
-        if (vehicle != null) {
+        if (vehicles != null) {
             double tileSize = 24.0; 
-            double vehicleCol = vehicle.getX() / tileSize;
-            double vehicleRow = vehicle.getY() / tileSize;
+            for (Vehicle vehicle : vehicles) {
+                if (vehicle == null) {
+                    continue;
+                }
 
-            double miniX = vehicleCol * miniTileWidth;
-            double miniY = vehicleRow * miniTileHeight;
+                double vehicleCol = vehicle.getX() / tileSize;
+                double vehicleRow = vehicle.getY() / tileSize;
 
-            gc.setFill(Color.web("#ffdd5c"));
-            gc.fillOval(miniX, miniY, 5, 5);
+                double miniX = vehicleCol * miniTileWidth;
+                double miniY = vehicleRow * miniTileHeight;
 
-            gc.setStroke(Color.rgb(60, 50, 20, 0.7));
-            gc.strokeOval(miniX, miniY, 5, 5);
+                Color fillColor = vehicle.getType() == VehicleType.TRAM
+                        ? Color.web("#5bd7ff")
+                        : Color.web("#ffdd5c");
+                Color strokeColor = vehicle.getType() == VehicleType.TRAM
+                        ? Color.rgb(20, 70, 95, 0.8)
+                        : Color.rgb(60, 50, 20, 0.8);
+
+                gc.setFill(fillColor);
+                gc.fillOval(miniX, miniY, 5, 5);
+
+                gc.setStroke(strokeColor);
+                gc.strokeOval(miniX, miniY, 5, 5);
+            }
+        }
+
+        if (focusedVehicle != null) {
+            double tileSize = 24.0;
+            double focusedCol = focusedVehicle.getX() / tileSize;
+            double focusedRow = focusedVehicle.getY() / tileSize;
+            double focusedX = focusedCol * miniTileWidth;
+            double focusedY = focusedRow * miniTileHeight;
+
+            gc.setStroke(Color.web("#ffffff"));
+            gc.setLineWidth(1.2);
+            gc.strokeOval(focusedX - 2, focusedY - 2, 9, 9);
         }
 
         

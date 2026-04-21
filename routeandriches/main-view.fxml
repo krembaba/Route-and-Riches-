@@ -103,8 +103,8 @@
                 <VBox spacing="6" styleClass="stats-card">
                     <Label text="Statistics" styleClass="stats-title"/>
                     <Label fx:id="stopCountLabel" text="Stops: 0" wrapText="true" styleClass="stats-line"/>
-                    <Label text="Passengers: --" wrapText="true" styleClass="stats-line"/>
-                    <Label text="Total Income: --" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="passengerWaitingLabel" text="Waiting: 0" wrapText="true" styleClass="stats-line"/>
+                    <Label fx:id="passengerOnboardLabel" text="Onboard: 0" wrapText="true" styleClass="stats-line"/>
                     <HBox spacing="8">
                         <Button text="Save" onAction="#handleSave" styleClass="secondary-action-button"/>
                         <Button text="Load" onAction="#handleLoad" styleClass="secondary-action-button"/>
