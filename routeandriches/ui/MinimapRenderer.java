@@ -18,6 +18,9 @@ import routeandriches.system.MinimapSystem;
  * @author dell
  */
 public class MinimapRenderer {
+    /**
+     * Executes drawMinimap.
+     */
     public void drawMinimap(GraphicsContext gc,
                             GameMap map,
                             MinimapSystem minimapSystem,

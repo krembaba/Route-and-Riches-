@@ -1,5 +1,11 @@
 package routeandriches.model.enums;
 
+/**
+
+ * Enumerates supported VehicleType values.
+
+ */
+
 public enum VehicleType {
     BUS(40, 50),
     TRAM(70, 40);
@@ -12,11 +18,18 @@ public enum VehicleType {
         this.defaultSpeed = defaultSpeed;
     }
 
+    /**
+     * Executes getCapacity.
+     */
     public int getCapacity() {
         return capacity;
     }
 
+    /**
+     * Executes getDefaultSpeed.
+     */
     public double getDefaultSpeed() {
         return defaultSpeed;
     }
 }
+

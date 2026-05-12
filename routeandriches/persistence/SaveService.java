@@ -13,8 +13,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Serializes and deserializes {@link GameSnapshot} instances to JSON files.
+ */
 public class SaveService {
 
+    /**
+     * Writes a snapshot to disk in JSON format.
+     *
+     * @param snapshot snapshot to persist
+     * @param filePath target file path
+     * @throws IOException if file writing fails
+     */
     public void save(GameSnapshot snapshot, String filePath) throws IOException {
         if (snapshot == null) {
             throw new IllegalArgumentException("Snapshot cannot be null.");
@@ -27,6 +37,13 @@ public class SaveService {
         Files.writeString(Path.of(filePath), json, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Loads a snapshot from disk.
+     *
+     * @param filePath source file path
+     * @return loaded snapshot
+     * @throws IOException if reading fails
+     */
     public GameSnapshot load(String filePath) throws IOException {
         if (filePath == null || filePath.isBlank()) {
             throw new IllegalArgumentException("File path cannot be empty.");
@@ -53,6 +70,9 @@ public class SaveService {
     }
 
     private String toJsonArray(java.util.List<String> list) {
+        if (list == null) {
+            return "[]";
+        }
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
             sb.append("\"").append(escapeJson(list.get(i))).append("\"");
@@ -65,6 +85,9 @@ public class SaveService {
     }
 
     private String escapeJson(String text) {
+        if (text == null) {
+            return "";
+        }
         return text.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 

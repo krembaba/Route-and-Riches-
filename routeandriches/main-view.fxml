@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -17,7 +18,7 @@
             styleClass="app-root">
 
     <top>
-        <VBox spacing="7" styleClass="top-shell">
+        <VBox spacing="7" styleClass="top-shell" viewOrder="-10.0">
             <Label text="Top Control Bar" styleClass="top-caption"/>
             <HBox alignment="CENTER_LEFT" spacing="12" styleClass="top-toolbar">
                 <VBox spacing="1">
@@ -30,13 +31,14 @@
                 <Button text="Normal" onAction="#handleNormalSpeed" styleClass="top-action-button"/>
                 <Button text="Fast" onAction="#handleFastSpeed" styleClass="top-action-button"/>
                 <Button text="Start" onAction="#handleStart" styleClass="start-button"/>
+                <Button fx:id="autoSimButton" text="Auto Sim" onAction="#handleToggleAutoSimulation" styleClass="top-action-button"/>
             </HBox>
         </VBox>
     </top>
 
     <center>
-        <HBox spacing="0" styleClass="center-shell">
-            <VBox minWidth="238" prefWidth="238" maxWidth="238" spacing="10" styleClass="sidebar-left">
+        <HBox spacing="0" minHeight="0" styleClass="center-shell" viewOrder="10.0">
+            <VBox minWidth="238" prefWidth="238" maxWidth="238" minHeight="0" spacing="10" styleClass="sidebar-left">
                 <VBox spacing="9" styleClass="panel-card">
                     <Label text="Navigator" styleClass="card-title"/>
                     <StackPane styleClass="minimap-frame">
@@ -52,22 +54,23 @@
                 </VBox>
             </VBox>
 
-            <VBox spacing="8" minWidth="0" HBox.hgrow="ALWAYS" styleClass="map-zone">
+            <VBox spacing="8" minWidth="0" minHeight="0" HBox.hgrow="ALWAYS" styleClass="map-zone">
                 <HBox styleClass="map-top-strip">
                     <Label text="City Grid" styleClass="map-strip-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label text="Drag to pan the world" styleClass="map-strip-hint"/>
                 </HBox>
 
-                <StackPane styleClass="map-shell" VBox.vgrow="ALWAYS">
+                <StackPane styleClass="map-shell" minHeight="0" VBox.vgrow="ALWAYS">
                     <ScrollPane fx:id="mapScrollPane"
                                 pannable="true"
                                 fitToWidth="false"
                                 fitToHeight="false"
                                 hbarPolicy="NEVER"
                                 vbarPolicy="NEVER"
-                                prefViewportWidth="920"
-                                prefViewportHeight="560"
+                                minHeight="0.0"
+                                prefViewportWidth="920.0"
+                                prefViewportHeight="500.0"
                                 VBox.vgrow="ALWAYS"
                                 styleClass="map-scroll">
                         <content>
@@ -77,45 +80,76 @@
                 </StackPane>
             </VBox>
 
-            <VBox minWidth="345" prefWidth="345" maxWidth="345" spacing="9" styleClass="sidebar-right">
-                <Label text="Information Panel" styleClass="side-title"/>
-                <Separator styleClass="section-separator"/>
+            <ScrollPane fitToWidth="true"
+                        hbarPolicy="NEVER"
+                        vbarPolicy="AS_NEEDED"
+                        prefWidth="345"
+                        minWidth="345"
+                        maxWidth="345"
+                        minHeight="0"
+                        styleClass="side-scroll">
+                <content>
+                    <VBox minWidth="345" prefWidth="345" maxWidth="345" minHeight="0" spacing="9" styleClass="sidebar-right">
+                        <Label text="Information Panel" styleClass="side-title"/>
+                        <Separator styleClass="section-separator"/>
 
-                <VBox spacing="6" styleClass="stats-card">
-                    <Label text="Simulation" styleClass="stats-title"/>
-                    <Label fx:id="stateLabel" text="State: PAUSED" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="speedLabel" text="Speed: PAUSED" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="timeLabel" text="Time: 0.0" wrapText="true" styleClass="stats-line"/>
-                </VBox>
+                        <VBox spacing="6" styleClass="stats-card">
+                            <Label text="Simulation" styleClass="stats-title"/>
+                            <Label fx:id="stateLabel" text="State: PAUSED" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="speedLabel" text="Speed: PAUSED" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="timeLabel" text="Time: 0.0" wrapText="true" styleClass="stats-line"/>
+                        </VBox>
 
-                <VBox spacing="6" styleClass="stats-card">
-                    <Label text="Fleet" styleClass="stats-title"/>
-                    <Label fx:id="vehicleCountLabel" text="Vehicles: 0" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="routeCountLabel" text="Routes: 0" wrapText="true" styleClass="stats-line"/>
-                </VBox>
+                        <VBox spacing="6" styleClass="stats-card">
+                            <Label text="Fleet" styleClass="stats-title"/>
+                            <Label fx:id="vehicleCountLabel" text="Vehicles: 0" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="routeCountLabel" text="Routes: 0" wrapText="true" styleClass="stats-line"/>
+                        </VBox>
 
-                <VBox spacing="6" VBox.vgrow="ALWAYS" styleClass="stats-card selected-card">
-                    <Label text="Selected Object" styleClass="stats-title"/>
-                    <Label fx:id="buildModeLabel" text="Mode: Build Road" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="hintLabel" text="No selection" wrapText="true" styleClass="hint-line"/>
-                </VBox>
+                        <VBox spacing="6" styleClass="stats-card">
+                            <Label text="City Growth" styleClass="stats-title"/>
+                            <Label fx:id="growthLevelLabel" text="Growth Level: 1" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="growthDemandLabel" text="Demand Index: 100%" wrapText="true" styleClass="stats-line"/>
+                        </VBox>
 
-                <VBox spacing="6" styleClass="stats-card">
-                    <Label text="Statistics" styleClass="stats-title"/>
-                    <Label fx:id="stopCountLabel" text="Stops: 0" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="passengerWaitingLabel" text="Waiting: 0" wrapText="true" styleClass="stats-line"/>
-                    <Label fx:id="passengerOnboardLabel" text="Onboard: 0" wrapText="true" styleClass="stats-line"/>
-                    <HBox spacing="8">
-                        <Button text="Save" onAction="#handleSave" styleClass="secondary-action-button"/>
-                        <Button text="Load" onAction="#handleLoad" styleClass="secondary-action-button"/>
-                    </HBox>
-                </VBox>
-            </VBox>
+                        <VBox spacing="8" styleClass="stats-card">
+                            <Label text="Traffic Light Timing" styleClass="stats-title"/>
+                            <Label fx:id="selectedTrafficLightLabel" text="Light: none selected" wrapText="true" styleClass="stats-line"/>
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Label text="Green (s)" styleClass="stats-line"/>
+                                <TextField fx:id="greenDurationField" promptText="3.0" prefWidth="80" onAction="#handleApplyTrafficLightTiming" styleClass="timing-field"/>
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Label text="Red (s)" styleClass="stats-line"/>
+                                <TextField fx:id="redDurationField" promptText="3.0" prefWidth="80" onAction="#handleApplyTrafficLightTiming" styleClass="timing-field"/>
+                            </HBox>
+                            <Button text="Apply Timing" onAction="#handleApplyTrafficLightTiming" styleClass="secondary-action-button"/>
+                        </VBox>
+
+                        <VBox spacing="6" styleClass="stats-card selected-card">
+                            <Label text="Selected Object" styleClass="stats-title"/>
+                            <Label fx:id="buildModeLabel" text="Mode: Build Road" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="hintLabel" text="No selection" wrapText="true" styleClass="hint-line"/>
+                        </VBox>
+
+                        <VBox spacing="6" styleClass="stats-card">
+                            <Label text="Statistics" styleClass="stats-title"/>
+                            <Label fx:id="stopCountLabel" text="Stops: 0" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="passengerWaitingLabel" text="Waiting: 0" wrapText="true" styleClass="stats-line"/>
+                            <Label fx:id="passengerOnboardLabel" text="Onboard: 0" wrapText="true" styleClass="stats-line"/>
+                            <HBox spacing="8">
+                                <Button text="Save" onAction="#handleSave" styleClass="secondary-action-button"/>
+                                <Button text="Load" onAction="#handleLoad" styleClass="secondary-action-button"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                </content>
+            </ScrollPane>
         </HBox>
     </center>
 
     <bottom>
-        <VBox spacing="6" styleClass="bottom-shell">
+        <VBox spacing="6" minHeight="84" prefHeight="84" maxHeight="84" styleClass="bottom-shell" viewOrder="-10.0" mouseTransparent="false">
             <Label text="Toolbar" styleClass="top-caption"/>
             <HBox alignment="CENTER" spacing="12" styleClass="bottom-toolbar">
                 <Button fx:id="buildRoadButton" text="Build Road" onAction="#handleBuildRoadMode" styleClass="mode-button"/>

@@ -15,14 +15,26 @@ import javafx.util.Duration;
 import routeandriches.controller.GameController;
 import routeandriches.controller.MainMenuController;
 
+/**
+
+ * Represents the Main component.
+
+ */
+
 public class Main extends Application {
 
     @Override
+    /**
+     * Executes start.
+     */
     public void start(Stage stage) throws Exception {
         showMainMenu(stage);
         stage.show();
     }
 
+    /**
+     * Executes showMainMenu.
+     */
     public void showMainMenu(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("main-menu.fxml"));
         Parent root = loader.load();
@@ -36,6 +48,9 @@ public class Main extends Application {
         switchSceneWithTransition(stage, root, "Route and Riches");
     }
 
+    /**
+     * Executes showGame.
+     */
     public void showGame(Stage stage, String saveFilePath) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("main-view.fxml"));
         Parent root = loader.load();
@@ -48,6 +63,10 @@ public class Main extends Application {
         stage.setMinWidth(1100);
         stage.setMinHeight(600);
         switchSceneWithTransition(stage, root, "Route and Riches");
+
+        // Keep launch behavior deterministic across DPI/display setups.
+        stage.setMaximized(true);
+        stage.toFront();
     }
 
     private void switchSceneWithTransition(Stage stage, Parent newRoot, String title) {
@@ -79,7 +98,11 @@ public class Main extends Application {
         fadeIn.play();
     }
 
+    /**
+     * Executes main.
+     */
     public static void main(String[] args) {
         launch(args);
     }
 }
+

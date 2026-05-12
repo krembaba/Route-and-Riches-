@@ -7,6 +7,12 @@ import java.util.Objects;
 import routeandriches.model.enums.PassengerState;
 import routeandriches.model.enums.VehicleType;
 
+/**
+
+ * Represents the Vehicle component.
+
+ */
+
 public class Vehicle {
 
     private final VehicleType type;
@@ -18,10 +24,16 @@ public class Vehicle {
     private int pathIndex;
     private final List<Passenger> onboardPassengers;
 
+    /**
+     * Creates a new Vehicle instance.
+     */
     public Vehicle(VehicleType type, double x, double y) {
         this(type, x, y, type == null ? 0 : type.getDefaultSpeed());
     }
 
+    /**
+     * Creates a new Vehicle instance.
+     */
     public Vehicle(VehicleType type, double x, double y, double speed) {
         this.type = Objects.requireNonNull(type, "Vehicle type cannot be null.");
         this.capacity = type.getCapacity();
@@ -32,6 +44,9 @@ public class Vehicle {
         this.onboardPassengers = new ArrayList<>();
     }
 
+    /**
+     * Executes assignRoute.
+     */
     public void assignRoute(Route route, double tileSize) {
         this.assignedRoute = route;
         this.pathIndex = 0;
@@ -43,6 +58,9 @@ public class Vehicle {
         }
     }
 
+    /**
+     * Executes update.
+     */
     public void update(double deltaSeconds, double tileSize) {
         if (assignedRoute == null || !assignedRoute.isValid()) {
             return;
@@ -74,30 +92,51 @@ public class Vehicle {
         }
     }
 
+    /**
+     * Executes getType.
+     */
     public VehicleType getType() {
         return type;
     }
 
+    /**
+     * Executes getX.
+     */
     public double getX() {
         return x;
     }
 
+    /**
+     * Executes getY.
+     */
     public double getY() {
         return y;
     }
 
+    /**
+     * Executes getSpeed.
+     */
     public double getSpeed() {
         return speed;
     }
 
+    /**
+     * Executes getAssignedRoute.
+     */
     public Route getAssignedRoute() {
         return assignedRoute;
     }
 
+    /**
+     * Executes getPathIndex.
+     */
     public int getPathIndex() {
         return pathIndex;
     }
 
+    /**
+     * Executes getCurrentPathPosition.
+     */
     public GridPos getCurrentPathPosition() {
         if (assignedRoute == null || !assignedRoute.isValid()) {
             return null;
@@ -111,6 +150,9 @@ public class Vehicle {
         return path.get(pathIndex);
     }
 
+    /**
+     * Executes getNextPathPosition.
+     */
     public GridPos getNextPathPosition() {
         if (assignedRoute == null || !assignedRoute.isValid()) {
             return null;
@@ -125,26 +167,44 @@ public class Vehicle {
         return path.get(nextIndex);
     }
 
+    /**
+     * Executes getCapacity.
+     */
     public int getCapacity() {
         return capacity;
     }
 
+    /**
+     * Executes getOnboardCount.
+     */
     public int getOnboardCount() {
         return onboardPassengers.size();
     }
 
+    /**
+     * Executes getOnboardPassengers.
+     */
     public List<Passenger> getOnboardPassengers() {
         return Collections.unmodifiableList(onboardPassengers);
     }
 
+    /**
+     * Executes clearOnboardPassengers.
+     */
     public void clearOnboardPassengers() {
         onboardPassengers.clear();
     }
 
+    /**
+     * Executes hasFreeSeat.
+     */
     public boolean hasFreeSeat() {
         return onboardPassengers.size() < capacity;
     }
 
+    /**
+     * Executes boardPassenger.
+     */
     public boolean boardPassenger(Passenger passenger) {
         if (passenger == null || !hasFreeSeat()) {
             return false;
@@ -159,6 +219,9 @@ public class Vehicle {
         return true;
     }
 
+    /**
+     * Executes restoreOnboardPassenger.
+     */
     public boolean restoreOnboardPassenger(Passenger passenger) {
         if (passenger == null || !hasFreeSeat()) {
             return false;
@@ -168,6 +231,9 @@ public class Vehicle {
         return true;
     }
 
+    /**
+     * Executes dropOffPassengersAt.
+     */
     public int dropOffPassengersAt(String stopId) {
         if (stopId == null || stopId.isBlank()) {
             return 0;
@@ -186,15 +252,24 @@ public class Vehicle {
         return dropped;
     }
 
+    /**
+     * Executes setSpeed.
+     */
     public void setSpeed(double speed) {
         this.speed = speed;
     }
 
+    /**
+     * Executes toSaveString.
+     */
     public String toSaveString() {
         String routeName = assignedRoute != null ? assignedRoute.getName() : "NONE";
         return type + "|" + x + "|" + y + "|" + speed + "|" + routeName + "|" + pathIndex;
     }
 
+    /**
+     * Executes fromSaveString.
+     */
     public static Vehicle fromSaveString(String data, List<Route> routes) {
         try {
             String[] parts = data.split("\\|");
@@ -248,3 +323,4 @@ public class Vehicle {
         return pos.getRow() * tileSize + tileSize / 2.0;
     }
 }
+

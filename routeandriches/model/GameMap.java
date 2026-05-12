@@ -1,11 +1,20 @@
 package routeandriches.model;
 
+/**
+
+ * Represents the GameMap component.
+
+ */
+
 public class GameMap {
 
     private final int rows;
     private final int cols;
     private final Tile[][] tiles;
 
+    /**
+     * Creates a new GameMap instance.
+     */
     public GameMap(int rows, int cols) {
         if (rows <= 0 || cols <= 0) {
             throw new IllegalArgumentException("Map size must be positive.");
@@ -28,15 +37,24 @@ public class GameMap {
         }
     }
 
+    /**
+     * Executes getTile.
+     */
     public Tile getTile(int row, int col) {
         validatePosition(row, col);
         return tiles[row][col];
     }
 
+    /**
+     * Executes isWithinBounds.
+     */
     public boolean isWithinBounds(int row, int col) {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 
+    /**
+     * Executes placeRoad.
+     */
     public boolean placeRoad(int row, int col) {
         validatePosition(row, col);
         Tile tile = tiles[row][col];
@@ -51,6 +69,9 @@ public class GameMap {
         return true;
     }
 
+    /**
+     * Executes placeStop.
+     */
     public boolean placeStop(int row, int col) {
         validatePosition(row, col);
         Tile tile = tiles[row][col];
@@ -66,28 +87,43 @@ public class GameMap {
         return true;
     }
 
+    /**
+     * Executes canPlaceRoad.
+     */
     public boolean canPlaceRoad(int row, int col) {
         validatePosition(row, col);
         Tile tile = tiles[row][col];
         return tile.isBuildable() && !tile.isRoadLike();
     }
 
+    /**
+     * Executes canPlaceStop.
+     */
     public boolean canPlaceStop(int row, int col) {
         validatePosition(row, col);
         Tile tile = tiles[row][col];
         return tile.isBuildable() && !tile.isRoadLike() && isRoadAdjacent(row, col);
     }
 
+    /**
+     * Executes isRoad.
+     */
     public boolean isRoad(int row, int col) {
         validatePosition(row, col);
         return tiles[row][col].isRoadLike();
     }
 
+    /**
+     * Executes isBuildable.
+     */
     public boolean isBuildable(int row, int col) {
         validatePosition(row, col);
         return tiles[row][col].isBuildable();
     }
 
+    /**
+     * Executes isRoadAdjacent.
+     */
     public boolean isRoadAdjacent(int row, int col) {
         return isRoadLikeAt(row - 1, col)
                 || isRoadLikeAt(row + 1, col)
@@ -95,6 +131,9 @@ public class GameMap {
                 || isRoadLikeAt(row, col + 1);
     }
 
+    /**
+     * Executes setTile.
+     */
     public void setTile(int row, int col, TileType type, boolean buildable,
                         DecorationType decorationType, int visualVariant) {
         validatePosition(row, col);
@@ -105,6 +144,9 @@ public class GameMap {
         tile.setVisualVariant(visualVariant);
     }
 
+    /**
+     * Executes refreshRoadShapes.
+     */
     public void refreshRoadShapes() {
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
@@ -113,6 +155,9 @@ public class GameMap {
         }
     }
 
+    /**
+     * Executes refreshRoadShapesAround.
+     */
     public void refreshRoadShapesAround(int row, int col) {
         for (int r = row - 1; r <= row + 1; r++) {
             for (int c = col - 1; c <= col + 1; c++) {
@@ -182,10 +227,16 @@ public class GameMap {
         return isWithinBounds(row, col) && tiles[row][col].isRoadLike();
     }
 
+    /**
+     * Executes getRows.
+     */
     public int getRows() {
         return rows;
     }
 
+    /**
+     * Executes getCols.
+     */
     public int getCols() {
         return cols;
     }
@@ -196,3 +247,4 @@ public class GameMap {
         }
     }
 }
+

@@ -19,6 +19,9 @@ public enum GameSpeed {
         this.multiplier = multiplier;
     }
 
+    /**
+     * Executes getMultiplier.
+     */
     public double getMultiplier() {
         return multiplier;
     }

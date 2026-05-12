@@ -9,18 +9,33 @@ import routeandriches.model.RoadShape;
 import routeandriches.model.Tile;
 import routeandriches.model.TileType;
 
+/**
+
+ * Represents the MapRenderer component.
+
+ */
+
 public class MapRenderer {
 
     private final double tileSize;
 
+    /**
+     * Creates a new MapRenderer instance.
+     */
     public MapRenderer(double tileSize) {
         this.tileSize = tileSize;
     }
 
+    /**
+     * Executes getTileSize.
+     */
     public double getTileSize() {
         return tileSize;
     }
 
+    /**
+     * Executes drawMap.
+     */
     public void drawMap(GraphicsContext gc, GameMap map) {
         gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
         gc.setFill(Color.web("#d9e6cf"));
@@ -42,6 +57,9 @@ public class MapRenderer {
         }
     }
 
+    /**
+     * Executes drawPlacementPreview.
+     */
     public void drawPlacementPreview(GraphicsContext gc, int row, int col, boolean valid, boolean stopMode) {
         double x = col * tileSize;
         double y = row * tileSize;
@@ -323,3 +341,4 @@ public class MapRenderer {
         }
     }
 }
+

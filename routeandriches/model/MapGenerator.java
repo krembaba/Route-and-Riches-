@@ -2,13 +2,25 @@ package routeandriches.model;
 
 import java.util.Random;
 
+/**
+
+ * Represents the MapGenerator component.
+
+ */
+
 public class MapGenerator {
     private final Random random;
 
+    /**
+     * Creates a new MapGenerator instance.
+     */
     public MapGenerator() {
         this.random = new Random(42L);
     }
 
+    /**
+     * Executes generateStarterRoadNetwork.
+     */
     public void generateStarterRoadNetwork(GameMap map) {
         if (map == null) {
             throw new IllegalArgumentException("GameMap cannot be null.");
@@ -241,3 +253,4 @@ public class MapGenerator {
         }
     }
 }
+

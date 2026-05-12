@@ -4,34 +4,58 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+
+ * Represents the Route component.
+
+ */
+
 public class Route {
 
     private final String name;
     private final List<GridPos> stops;
     private final List<GridPos> path;
 
+    /**
+     * Creates a new Route instance.
+     */
     public Route(String name, List<GridPos> stops, List<GridPos> path) {
         this.name = name;
         this.stops = new ArrayList<>(stops);
         this.path = new ArrayList<>(path);
     }
 
+    /**
+     * Executes getName.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Executes getStops.
+     */
     public List<GridPos> getStops() {
         return Collections.unmodifiableList(stops);
     }
 
+    /**
+     * Executes getPath.
+     */
     public List<GridPos> getPath() {
         return Collections.unmodifiableList(path);
     }
 
+    /**
+     * Executes isValid.
+     */
     public boolean isValid() {
         return stops.size() >= 2 && path.size() >= 2;
     }
 
+    /**
+     * Executes toSaveString.
+     */
     public String toSaveString() {
         return name + "#" + encode(stops) + "#" + encode(path);
     }
@@ -50,6 +74,9 @@ public class Route {
         return sb.toString();
     }
 
+    /**
+     * Executes fromSaveString.
+     */
     public static Route fromSaveString(String data) {
         if (data == null || data.isBlank()) {
             return null;

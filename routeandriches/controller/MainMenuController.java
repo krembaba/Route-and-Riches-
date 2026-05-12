@@ -15,6 +15,12 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import routeandriches.Main;
 
+/**
+
+ * Represents the MainMenuController component.
+
+ */
+
 public class MainMenuController {
 
     private Main mainApp;
@@ -33,10 +39,16 @@ public class MainMenuController {
         animateLogo();
     }
 
+    /**
+     * Executes setMainApp.
+     */
     public void setMainApp(Main mainApp) {
         this.mainApp = mainApp;
     }
 
+    /**
+     * Executes setStage.
+     */
     public void setStage(Stage stage) {
         this.stage = stage;
     }
@@ -137,3 +149,4 @@ public class MainMenuController {
         setStatus(message);
     }
 }
+

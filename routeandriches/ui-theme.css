@@ -65,6 +65,13 @@
     -fx-background-color: linear-gradient(#49627a, #365066);
 }
 
+.auto-sim-active {
+    -fx-background-color: linear-gradient(#f5a642, #cf7e1b);
+    -fx-border-color: #ffd08a;
+    -fx-text-fill: #1b1205;
+    -fx-font-weight: 800;
+}
+
 .start-button {
     -fx-padding: 8 18 8 18;
     -fx-background-radius: 9;
@@ -227,6 +234,17 @@
     -fx-font-style: italic;
 }
 
+.timing-field {
+    -fx-background-color: linear-gradient(#eff6ff, #dce8f4);
+    -fx-text-fill: #1e3347;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-border-color: #82a3bf;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 5 8 5 8;
+}
+
 .secondary-action-button {
     -fx-padding: 7 14 7 14;
     -fx-background-radius: 8;
@@ -265,6 +283,7 @@
     -fx-font-weight: 800;
     -fx-cursor: hand;
 }
+
 
 .mode-button:hover {
     -fx-background-color: linear-gradient(#ffffff, #e2ecf5);

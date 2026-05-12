@@ -1,5 +1,11 @@
 package routeandriches.model;
 
+/**
+
+ * Enumerates supported RoadShape values.
+
+ */
+
 public enum RoadShape {
     NONE,
     STRAIGHT_HORIZONTAL,
@@ -18,3 +24,4 @@ public enum RoadShape {
     DEAD_END_E,
     DEAD_END_W
 }
+

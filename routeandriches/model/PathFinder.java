@@ -8,6 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+
+ * Represents the PathFinder component.
+
+ */
+
 public class PathFinder {
 
     private static final int[][] DIRECTIONS = {
@@ -17,6 +23,9 @@ public class PathFinder {
         {0, 1}
     };
 
+    /**
+     * Executes findPath.
+     */
     public List<GridPos> findPath(GameMap gameMap, GridPos start, GridPos goal) {
         if (gameMap == null || start == null || goal == null) {
             return Collections.emptyList();

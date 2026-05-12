@@ -3,14 +3,17 @@ package routeandriches.controller;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -19,8 +22,11 @@ import javafx.geometry.Point2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import routeandriches.model.DecorationType;
@@ -43,6 +49,12 @@ import routeandriches.system.MinimapSystem;
 import routeandriches.ui.MapRenderer;
 import routeandriches.ui.MinimapRenderer;
 
+/**
+
+ * Represents the GameController component.
+
+ */
+
 public class GameController {
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
@@ -60,11 +72,16 @@ public class GameController {
     private Vehicle focusedVehicle;
     private Route activeRoute;
     private final List<GridPos> pendingRouteStops = new ArrayList<>();
+    private TrafficLight selectedTrafficLight;
     private int hoveredRow = -1;
     private int hoveredCol = -1;
     private long lastMinimapRenderNanos = 0L;
     private boolean mapStaticDirty = true;
     private boolean minimapDirty = true;
+    private boolean autoSimulationEnabled = false;
+    private double autoActionTimerSeconds = 0.0;
+    private double autoRouteTimerSeconds = 0.0;
+    private final Random autoRandom = new Random(123L);
     private Canvas mapStaticCanvas;
     private WritableImage mapStaticImage;
 
@@ -82,6 +99,7 @@ public class GameController {
     @FXML private Button createRouteButton;
     @FXML private Button spawnBusButton;
     @FXML private Button spawnTramButton;
+    @FXML private Button autoSimButton;
 
     @FXML private Label moneyLabel;
     @FXML private Label vehicleCountLabel;
@@ -89,11 +107,19 @@ public class GameController {
     @FXML private Label stopCountLabel;
     @FXML private Label passengerWaitingLabel;
     @FXML private Label passengerOnboardLabel;
+    @FXML private Label growthLevelLabel;
+    @FXML private Label growthDemandLabel;
+    @FXML private Label selectedTrafficLightLabel;
+    @FXML private TextField greenDurationField;
+    @FXML private TextField redDurationField;
 
     private AnimationTimer gameLoop;
     private long lastUpdate = 0L;
 
     @FXML
+    /**
+     * Executes initialize.
+     */
     public void initialize() {
         mapCanvas.setWidth(game.getGameMap().getCols() * mapRenderer.getTileSize());
         mapCanvas.setHeight(game.getGameMap().getRows() * mapRenderer.getTileSize());
@@ -102,7 +128,10 @@ public class GameController {
 
         setupGameLoop();
         setupMouseInput();
+        setupKeyboardShortcuts();
         updateInteractionModeUI();
+        updateAutoSimButtonState();
+        syncTrafficLightTimingControls();
         render();
         updateLabels();
         updateHud();
@@ -111,6 +140,9 @@ public class GameController {
     private void setupGameLoop() {
         gameLoop = new AnimationTimer() {
             @Override
+            /**
+             * Executes handle.
+             */
             public void handle(long now) {
                 if (lastUpdate == 0L) {
                     lastUpdate = now;
@@ -126,6 +158,7 @@ public class GameController {
                 lastUpdate = now;
 
                 game.update(deltaSeconds, mapRenderer.getTileSize());
+                runAutoSimulation(deltaSeconds);
 
                 render(now);
                 updateLabels();
@@ -210,7 +243,14 @@ public class GameController {
                 }
 
                 case SELECT -> {
-                    hintLabel.setText("Selection mode");
+                    TrafficLight selected = game.getTrafficLightSystem().getTrafficLightAt(new GridPos(row, col));
+                    if (selected != null) {
+                        selectedTrafficLight = selected;
+                        syncTrafficLightTimingControls();
+                        hintLabel.setText("Traffic light selected. Adjust timing in panel.");
+                    } else {
+                        hintLabel.setText("Selection mode");
+                    }
                 }
             }
 
@@ -227,6 +267,48 @@ public class GameController {
             centerMainViewportOn(minimapTarget);
             hintLabel.setText("Jumped to district: " + minimapTarget.getRow() + ", " + minimapTarget.getCol());
         });
+    }
+
+    private void setupKeyboardShortcuts() {
+        Platform.runLater(() -> {
+            if (mapCanvas.getScene() == null) {
+                return;
+            }
+            mapCanvas.getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::handleShortcutKey);
+        });
+    }
+
+    private void handleShortcutKey(KeyEvent event) {
+        if (event == null) {
+            return;
+        }
+
+        KeyCode key = event.getCode();
+        switch (key) {
+            case DIGIT1 -> handleBuildRoadMode();
+            case DIGIT2 -> handlePlaceStopMode();
+            case DIGIT3 -> handlePlaceTrafficLightMode();
+            case DIGIT4 -> handleCreateRouteMode();
+            case DIGIT5 -> handleSpawnBusMode();
+            case DIGIT6 -> handleSpawnTramMode();
+            case SPACE -> {
+                if (game.getGameState() == GameState.RUNNING) {
+                    handlePause();
+                } else {
+                    handleStart();
+                }
+            }
+            case F -> handleFastSpeed();
+            case N -> handleNormalSpeed();
+            case S -> handleSave();
+            case L -> handleLoad();
+            case A -> handleToggleAutoSimulation();
+            default -> {
+                return;
+            }
+        }
+
+        event.consume();
     }
 
     private GridPos resolveGridPositionFromEvent(MouseEvent event) {
@@ -521,6 +603,9 @@ public class GameController {
         loadGameFromFile("savegame.json");
     }
 
+    /**
+     * Executes loadGameFromFile.
+     */
     public void loadGameFromFile(String filePath) {
         try {
             GameSnapshot snapshot = saveService.load(filePath);
@@ -534,6 +619,8 @@ public class GameController {
             restoreClockAndState(snapshot);
             activeRoute = getRouteForPurchase();
             focusedVehicle = getFocusedVehicle();
+            selectedTrafficLight = null;
+            syncTrafficLightTimingControls();
             pendingRouteStops.clear();
 
             hintLabel.setText("Game loaded from " + filePath);
@@ -570,6 +657,22 @@ public class GameController {
         game.setSpeed(GameSpeed.FAST);
         game.resume();
         updateLabels();
+    }
+
+    @FXML
+    private void handleToggleAutoSimulation() {
+        autoSimulationEnabled = !autoSimulationEnabled;
+        autoActionTimerSeconds = 0.0;
+        autoRouteTimerSeconds = 0.0;
+        updateAutoSimButtonState();
+
+        if (autoSimulationEnabled) {
+            game.start();
+            game.setSpeed(GameSpeed.FAST);
+            hintLabel.setText("Auto Simulation enabled");
+        } else {
+            hintLabel.setText("Auto Simulation disabled");
+        }
     }
 
     private void attemptPurchase(VehicleType type, int cost) {
@@ -624,7 +727,7 @@ public class GameController {
         hintLabel.setText(switch (interactionMode) {
             case BUILD_ROAD -> "Roads can be placed only on buildable land (-$" + game.getRoadCost() + ")";
             case PLACE_STOP -> "Stops can be placed only next to existing roads (-$" + game.getStopCost() + ")";
-            case PLACE_TRAFFIC_LIGHT -> "Click intersection to place/cycle light. Right-click to remove";
+            case PLACE_TRAFFIC_LIGHT -> "Click intersection to place/select light. Right-click existing light to remove";
             case CREATE_ROUTE -> "Click stops to build a route. Click the first selected stop again to finish";
             case SPAWN_BUS -> "Buy a bus for $" + game.getBusCost() + " on the active route";
             case SPAWN_TRAM -> "Buy a tram for $" + game.getTramCost() + " on the active route";
@@ -652,6 +755,20 @@ public class GameController {
         }
     }
 
+    private void updateAutoSimButtonState() {
+        if (autoSimButton == null) {
+            return;
+        }
+
+        autoSimButton.getStyleClass().remove("auto-sim-active");
+        if (autoSimulationEnabled) {
+            autoSimButton.getStyleClass().add("auto-sim-active");
+            autoSimButton.setText("Auto Sim: ON");
+        } else {
+            autoSimButton.setText("Auto Sim");
+        }
+    }
+
     private void handleTrafficLightInteraction(int row, int col, MouseButton mouseButton) {
         if (!isValidTrafficLightTile(row, col)) {
             hintLabel.setText("Traffic lights can be placed only on road intersections");
@@ -664,12 +781,15 @@ public class GameController {
         if (existing != null) {
             if (mouseButton == MouseButton.SECONDARY) {
                 game.getTrafficLightSystem().removeTrafficLightAt(position);
+                if (selectedTrafficLight == existing) {
+                    selectedTrafficLight = null;
+                    syncTrafficLightTimingControls();
+                }
                 hintLabel.setText("Traffic light removed");
             } else {
-                cycleTrafficLightTiming(existing);
-                hintLabel.setText("Light timing set to G:"
-                        + formatSeconds(existing.getGreenDuration())
-                        + "s / R:" + formatSeconds(existing.getRedDuration()) + "s");
+                selectedTrafficLight = existing;
+                syncTrafficLightTimingControls();
+                hintLabel.setText("Traffic light selected. Set red/green timing in the panel.");
             }
             return;
         }
@@ -680,7 +800,10 @@ public class GameController {
             return;
         }
 
-        game.getTrafficLightSystem().addTrafficLight(new TrafficLight(position));
+        TrafficLight newLight = new TrafficLight(position);
+        game.getTrafficLightSystem().addTrafficLight(newLight);
+        selectedTrafficLight = newLight;
+        syncTrafficLightTimingControls();
         hintLabel.setText("Traffic light placed (-$" + cost + ")");
     }
 
@@ -697,26 +820,29 @@ public class GameController {
                 || shape == RoadShape.T_RIGHT;
     }
 
-    private void cycleTrafficLightTiming(TrafficLight light) {
-        double[][] presets = {
-                {3.0, 3.0},
-                {4.5, 2.5},
-                {5.5, 3.5}
-        };
-
-        int currentIndex = 0;
-        for (int i = 0; i < presets.length; i++) {
-            if (Math.abs(light.getGreenDuration() - presets[i][0]) < 0.05
-                    && Math.abs(light.getRedDuration() - presets[i][1]) < 0.05) {
-                currentIndex = i;
-                break;
-            }
+    @FXML
+    private void handleApplyTrafficLightTiming() {
+        if (selectedTrafficLight == null
+                || !game.getTrafficLightSystem().hasTrafficLightAt(selectedTrafficLight.getPosition())) {
+            selectedTrafficLight = null;
+            syncTrafficLightTimingControls();
+            hintLabel.setText("Select a traffic light first.");
+            return;
         }
 
-        int nextIndex = (currentIndex + 1) % presets.length;
-        light.setGreenDuration(presets[nextIndex][0]);
-        light.setRedDuration(presets[nextIndex][1]);
-        light.setStateTimer(0.0);
+        Double greenSeconds = parsePositiveDuration(greenDurationField == null ? null : greenDurationField.getText());
+        Double redSeconds = parsePositiveDuration(redDurationField == null ? null : redDurationField.getText());
+        if (greenSeconds == null || redSeconds == null) {
+            hintLabel.setText("Use positive numbers for green/red durations (e.g., 3.5).");
+            return;
+        }
+
+        selectedTrafficLight.setGreenDuration(greenSeconds);
+        selectedTrafficLight.setRedDuration(redSeconds);
+        selectedTrafficLight.setStateTimer(0.0);
+        syncTrafficLightTimingControls();
+        hintLabel.setText("Timing applied immediately: G:"
+                + formatSeconds(greenSeconds) + "s / R:" + formatSeconds(redSeconds) + "s");
     }
 
     private String formatSeconds(double seconds) {
@@ -753,6 +879,430 @@ public class GameController {
         if (passengerOnboardLabel != null) {
             passengerOnboardLabel.setText("Onboard: " + getTotalOnboardPassengers());
         }
+
+        if (growthLevelLabel != null) {
+            growthLevelLabel.setText("Growth Level: " + game.getCityGrowthSystem().getGrowthLevel());
+        }
+
+        if (growthDemandLabel != null) {
+            int demandPercent = (int) Math.round(game.getCityGrowthSystem().getGlobalDemandMultiplier() * 100.0);
+            growthDemandLabel.setText("Demand Index: " + demandPercent + "%");
+        }
+    }
+
+    private void syncTrafficLightTimingControls() {
+        if (selectedTrafficLight != null
+                && !game.getTrafficLightSystem().hasTrafficLightAt(selectedTrafficLight.getPosition())) {
+            selectedTrafficLight = null;
+        }
+
+        if (selectedTrafficLightLabel != null) {
+            if (selectedTrafficLight == null) {
+                selectedTrafficLightLabel.setText("Light: none selected");
+            } else {
+                GridPos pos = selectedTrafficLight.getPosition();
+                selectedTrafficLightLabel.setText("Light: (" + pos.getRow() + ", " + pos.getCol() + ")");
+            }
+        }
+
+        if (greenDurationField != null) {
+            greenDurationField.setText(selectedTrafficLight == null
+                    ? ""
+                    : formatSeconds(selectedTrafficLight.getGreenDuration()));
+        }
+
+        if (redDurationField != null) {
+            redDurationField.setText(selectedTrafficLight == null
+                    ? ""
+                    : formatSeconds(selectedTrafficLight.getRedDuration()));
+        }
+    }
+
+    private Double parsePositiveDuration(String rawText) {
+        if (rawText == null || rawText.isBlank()) {
+            return null;
+        }
+
+        try {
+            double value = Double.parseDouble(rawText.trim());
+            if (value < 0.5 || value > 30.0) {
+                return null;
+            }
+            return value;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private void runAutoSimulation(double deltaSeconds) {
+        if (!autoSimulationEnabled) {
+            return;
+        }
+
+        if (game.getGameState() != GameState.RUNNING) {
+            game.start();
+        }
+        if (game.getGameClock().getGameSpeed() != GameSpeed.FAST) {
+            game.setSpeed(GameSpeed.FAST);
+        }
+
+        autoActionTimerSeconds += Math.max(0.0, deltaSeconds);
+        autoRouteTimerSeconds += Math.max(0.0, deltaSeconds);
+
+        while (autoActionTimerSeconds >= 0.30) {
+            autoActionTimerSeconds -= 0.30;
+            performAutoBuildStep();
+        }
+
+        if (autoRouteTimerSeconds >= 2.2) {
+            autoRouteTimerSeconds = 0.0;
+            performAutoRouteAndFleetStep();
+        }
+    }
+
+    private void performAutoBuildStep() {
+        GameMap map = game.getGameMap();
+        int routesWithoutVehicles = countRoutesWithoutVehicles();
+        int reserveForFleet = routesWithoutVehicles > 0 ? game.getBusCost() : 0;
+        int availableBudget = game.getMoney() - reserveForFleet;
+        int totalStops = getAllStopPositions().size();
+        int unassignedStops = countStopsNotOnAnyRoute();
+        int maxStopsSupported = 3 + game.getRoutes().size() * 3 + game.getVehicles().size() * 2;
+        boolean networkReadyForNewStops = game.getRoutes().size() >= 1
+                && game.getVehicles().size() >= Math.max(1, game.getRoutes().size());
+        boolean canAddStop = totalStops < maxStopsSupported
+                && unassignedStops <= Math.max(1, totalStops / 4)
+                && networkReadyForNewStops;
+
+        if (availableBudget < game.getRoadCost()) {
+            return;
+        }
+
+        if (autoRandom.nextDouble() < 0.33
+                && canAddStop
+                && availableBudget >= game.getStopCost()
+                && tryAutoPlaceStop(map)) {
+            return;
+        }
+
+        if (availableBudget >= game.getRoadCost() && tryAutoPlaceRoad(map)) {
+            return;
+        }
+
+        if (autoRandom.nextDouble() < 0.24
+                && availableBudget >= game.getTrafficLightCost()
+                && tryAutoPlaceTrafficLight(map)) {
+            return;
+        }
+
+        randomlyAdjustTrafficLightTiming();
+    }
+
+    private boolean tryAutoPlaceRoad(GameMap map) {
+        List<GridPos> candidates = new ArrayList<>();
+
+        for (int row = 1; row < map.getRows() - 1; row++) {
+            for (int col = 1; col < map.getCols() - 1; col++) {
+                if (map.canPlaceRoad(row, col) && map.isRoadAdjacent(row, col)) {
+                    candidates.add(new GridPos(row, col));
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return false;
+        }
+
+        GridPos target = candidates.get(autoRandom.nextInt(candidates.size()));
+        if (!game.spendMoney(game.getRoadCost())) {
+            return false;
+        }
+        if (!map.placeRoad(target.getRow(), target.getCol())) {
+            return false;
+        }
+
+        markMapStaticDirty();
+        hintLabel.setText("Auto: built road");
+        return true;
+    }
+
+    private boolean tryAutoPlaceStop(GameMap map) {
+        List<GridPos> candidates = new ArrayList<>();
+        List<GridPos> existingStops = getAllStopPositions();
+
+        for (int row = 1; row < map.getRows() - 1; row++) {
+            for (int col = 1; col < map.getCols() - 1; col++) {
+                if (!map.canPlaceStop(row, col)) {
+                    continue;
+                }
+                GridPos candidate = new GridPos(row, col);
+                int nearestStopDistance = nearestStopDistance(candidate, existingStops);
+                if (nearestStopDistance >= 4) {
+                    candidates.add(candidate);
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            for (int row = 1; row < map.getRows() - 1; row++) {
+                for (int col = 1; col < map.getCols() - 1; col++) {
+                    if (map.canPlaceStop(row, col)) {
+                        candidates.add(new GridPos(row, col));
+                    }
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return false;
+        }
+
+        GridPos target = candidates.get(autoRandom.nextInt(candidates.size()));
+        if (!game.spendMoney(game.getStopCost())) {
+            return false;
+        }
+        if (!map.placeStop(target.getRow(), target.getCol())) {
+            return false;
+        }
+
+        markMapStaticDirty();
+        hintLabel.setText("Auto: placed stop");
+        return true;
+    }
+
+    private int nearestStopDistance(GridPos candidate, List<GridPos> stops) {
+        if (stops.isEmpty()) {
+            return Integer.MAX_VALUE;
+        }
+
+        int best = Integer.MAX_VALUE;
+        for (GridPos stop : stops) {
+            int distance = Math.abs(candidate.getRow() - stop.getRow())
+                    + Math.abs(candidate.getCol() - stop.getCol());
+            if (distance < best) {
+                best = distance;
+            }
+        }
+        return best;
+    }
+
+    private boolean tryAutoPlaceTrafficLight(GameMap map) {
+        List<GridPos> candidates = new ArrayList<>();
+
+        for (int row = 1; row < map.getRows() - 1; row++) {
+            for (int col = 1; col < map.getCols() - 1; col++) {
+                if (isValidTrafficLightTile(row, col)
+                        && !game.getTrafficLightSystem().hasTrafficLightAt(new GridPos(row, col))) {
+                    candidates.add(new GridPos(row, col));
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return false;
+        }
+
+        GridPos target = candidates.get(autoRandom.nextInt(candidates.size()));
+        if (!game.spendMoney(game.getTrafficLightCost())) {
+            return false;
+        }
+        game.getTrafficLightSystem().addTrafficLight(new TrafficLight(target));
+        hintLabel.setText("Auto: placed traffic light");
+        return true;
+    }
+
+    private void randomlyAdjustTrafficLightTiming() {
+        List<TrafficLight> lights = game.getTrafficLightSystem().getTrafficLights();
+        if (lights.isEmpty() || autoRandom.nextDouble() > 0.10) {
+            return;
+        }
+
+        TrafficLight light = lights.get(autoRandom.nextInt(lights.size()));
+        double green = 2.0 + autoRandom.nextDouble() * 5.0;
+        double red = 2.0 + autoRandom.nextDouble() * 5.0;
+        light.setGreenDuration(green);
+        light.setRedDuration(red);
+        light.setStateTimer(0.0);
+    }
+
+    private void performAutoRouteAndFleetStep() {
+        autoBuyVehiclesForRoutes();
+
+        int routesWithoutVehicles = countRoutesWithoutVehicles();
+        int totalRoutes = game.getRoutes().size();
+        int totalVehicles = game.getVehicles().size();
+        int unassignedStops = countStopsNotOnAnyRoute();
+
+        boolean shouldExpandRoutes = routesWithoutVehicles == 0
+                && totalRoutes < 10
+                && (unassignedStops > 0 || totalVehicles >= totalRoutes || totalRoutes < 2);
+
+        if (shouldExpandRoutes) {
+            tryAutoCreateRoute();
+        }
+    }
+
+    private boolean tryAutoCreateRoute() {
+        List<GridPos> stops = getAllStopPositions();
+        if (stops.size() < 2) {
+            return false;
+        }
+
+        stops.sort(Comparator.comparingInt(GridPos::getRow).thenComparingInt(GridPos::getCol));
+        Set<String> usedStopIds = getStopIdsOnAnyRoute();
+        List<GridPos> unassignedStops = new ArrayList<>();
+        List<GridPos> assignedStops = new ArrayList<>();
+        for (GridPos stop : stops) {
+            if (usedStopIds.contains(stopId(stop))) {
+                assignedStops.add(stop);
+            } else {
+                unassignedStops.add(stop);
+            }
+        }
+
+        for (int attempt = 0; attempt < 24; attempt++) {
+            GridPos start;
+            GridPos end;
+
+            if (!unassignedStops.isEmpty()) {
+                end = unassignedStops.get(autoRandom.nextInt(unassignedStops.size()));
+                List<GridPos> startPool = assignedStops.isEmpty() ? stops : assignedStops;
+                start = startPool.get(autoRandom.nextInt(startPool.size()));
+                if (start.equals(end)) {
+                    continue;
+                }
+            } else {
+                start = stops.get(autoRandom.nextInt(stops.size()));
+                end = stops.get(autoRandom.nextInt(stops.size()));
+            }
+
+            if (start.equals(end) || routeAlreadyExists(start, end)) {
+                continue;
+            }
+
+            int distance = Math.abs(start.getRow() - end.getRow()) + Math.abs(start.getCol() - end.getCol());
+            if (distance < 8) {
+                continue;
+            }
+
+            List<GridPos> routeStops = List.of(start, end);
+            List<GridPos> path = buildRoutePath(routeStops);
+            if (path.size() < 3) {
+                continue;
+            }
+
+            Route route = new Route("Auto Route " + (game.getRoutes().size() + 1), routeStops, path);
+            if (game.addRoute(route)) {
+                activeRoute = route;
+                hintLabel.setText("Auto: created " + route.getName());
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean routeAlreadyExists(GridPos start, GridPos end) {
+        for (Route route : game.getRoutes()) {
+            List<GridPos> routeStops = route.getStops();
+            if (routeStops.size() < 2) {
+                continue;
+            }
+
+            GridPos first = routeStops.get(0);
+            GridPos last = routeStops.get(routeStops.size() - 1);
+            boolean sameDirection = first.equals(start) && last.equals(end);
+            boolean oppositeDirection = first.equals(end) && last.equals(start);
+
+            if (sameDirection || oppositeDirection) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void autoBuyVehiclesForRoutes() {
+        int budgetReserve = game.getBusCost() + 25;
+
+        for (Route route : game.getRoutes()) {
+            int assigned = countVehiclesAssignedToRoute(route);
+
+            if (assigned == 0 && game.getMoney() >= game.getBusCost()) {
+                if (game.buyVehicle(VehicleType.BUS, game.getBusCost(), route, mapRenderer.getTileSize())) {
+                    hintLabel.setText("Auto: bought bus for " + route.getName());
+                }
+                continue;
+            }
+
+            if (assigned == 1
+                    && game.getMoney() >= game.getTramCost() + budgetReserve
+                    && autoRandom.nextDouble() < 0.45) {
+                if (game.buyVehicle(VehicleType.TRAM, game.getTramCost(), route, mapRenderer.getTileSize())) {
+                    hintLabel.setText("Auto: bought tram for " + route.getName());
+                }
+            }
+        }
+    }
+
+    private int countRoutesWithoutVehicles() {
+        int count = 0;
+        for (Route route : game.getRoutes()) {
+            if (countVehiclesAssignedToRoute(route) == 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int countVehiclesAssignedToRoute(Route route) {
+        int count = 0;
+        for (Vehicle vehicle : game.getVehicles()) {
+            if (vehicle.getAssignedRoute() == route) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private List<GridPos> getAllStopPositions() {
+        List<GridPos> stops = new ArrayList<>();
+        GameMap map = game.getGameMap();
+
+        for (int row = 0; row < map.getRows(); row++) {
+            for (int col = 0; col < map.getCols(); col++) {
+                if (map.getTile(row, col).getType() == TileType.STOP) {
+                    stops.add(new GridPos(row, col));
+                }
+            }
+        }
+
+        return stops;
+    }
+
+    private int countStopsNotOnAnyRoute() {
+        Set<String> usedStopIds = getStopIdsOnAnyRoute();
+        int count = 0;
+        for (GridPos stop : getAllStopPositions()) {
+            if (!usedStopIds.contains(stopId(stop))) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private Set<String> getStopIdsOnAnyRoute() {
+        Set<String> ids = new HashSet<>();
+        for (Route route : game.getRoutes()) {
+            for (GridPos stop : route.getStops()) {
+                ids.add(stopId(stop));
+            }
+        }
+        return ids;
+    }
+
+    private String stopId(GridPos pos) {
+        return "S_" + pos.getRow() + "_" + pos.getCol();
     }
 
     private int countStopsOnMap() {
@@ -1288,3 +1838,4 @@ public class GameController {
         }
     }
 }
+
